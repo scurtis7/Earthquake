@@ -1,0 +1,12 @@
+<div class="card">
+  <p-menubar [model]="items">
+    <ng-template #start>
+    </ng-template>
+    <ng-template #end>
+      <div class="card flex justify-center">
+        <p-togglebutton [(ngModel)]="checked" (onChange)="toggleDarkMode()" onLabel="Dark" offLabel="Light" onIcon="pi pi-moon" offIcon="pi pi-sun" styleClass="w-36" ariaLabel="Toggle dark mode">
+        </p-togglebutton>
+      </div>
+    </ng-template>
+  </p-menubar>
+</div>

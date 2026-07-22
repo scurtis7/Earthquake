@@ -1,0 +1,9 @@
+# Application Test Properties
+
+spring:
+  r2dbc:
+    url: r2dbc:h2:mem://./testDb
+    username: sa
+    password: sa
+  flyway:
+    enabled: false

@@ -1,0 +1,14 @@
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 50px;
+  border: 1px solid aliceblue;
+}
+
+.header-title {
+  grid-column-start: 1;
+  grid-row-start: 1;
+  font-size: 30px;
+  font-family: "Comic Sans MS", sans-serif;
+}

@@ -1,0 +1,14 @@
+
+.footer-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--p-sky-900);
+  height: 40px;
+  border-radius: 5px;
+}
+
+.footer-text {
+  font-size: .8rem;
+}
