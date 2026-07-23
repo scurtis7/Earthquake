@@ -209,7 +209,8 @@ public class EarthquakeService {
             if (startDate.isEqual(endDate) || startDate.isAfter(currentDate)) {
                 break;
             }
-            // USGS only allows 500 requests in a 5-minute period
+            // USGS only allows 500 requests in a 5-minute period.
+            // A 1-second delay seems to slow it down enough.
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
