@@ -1,7 +1,37 @@
-<p>home works!</p>
-
-<div class="card flex justify-content-center">
-  <p-button label="Check" icon="pi pi-check"></p-button>
+<div class="card home-layout">
+  <div class="filters-row">
+    <div class="filter-field">
+      <label for="period">Period</label>
+      <p-select
+        inputId="period"
+        [options]="periodOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="period"
+        (onChange)="onFilterChange()" />
+    </div>
+    <div class="filter-field">
+      <label for="startDate">Start Date</label>
+      <p-datepicker
+        inputId="startDate"
+        [(ngModel)]="startDate"
+        [minDate]="minDate"
+        [maxDate]="startMaxDate"
+        dateFormat="yy-mm-dd"
+        showIcon
+        (onSelect)="onFilterChange()" />
+    </div>
+    <div class="filter-field">
+      <label for="endDate">End Date</label>
+      <p-datepicker
+        inputId="endDate"
+        [(ngModel)]="endDate"
+        [minDate]="endMinDate"
+        [maxDate]="maxDate"
+        dateFormat="yy-mm-dd"
+        showIcon
+        (onSelect)="onFilterChange()" />
+    </div>
+  </div>
+  <p-chart type="line" [data]="data" [options]="options" class="h-[30rem]" />
 </div>
-
-
