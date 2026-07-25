@@ -28,10 +28,15 @@ export class HeaderComponent implements OnInit {
     this.toggleDarkMode();
     this.items = [
       {
-        label: 'Earthquakes',
-        // icon: 'pi pi-earthquakes',
+        label: 'Home',
         command: () => {
           this.router.navigate(['/home']);
+        }
+      },
+      {
+        label: 'Admin',
+        command: () => {
+          this.router.navigate(['/admin']);
         }
       }
     ]
