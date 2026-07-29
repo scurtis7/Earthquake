@@ -5,3 +5,9 @@ spring:
     name: earthquakes
   codec:
     max-in-memory-size: 50000KB
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
