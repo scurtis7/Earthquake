@@ -37,3 +37,6 @@ bin/
 
 ### Miscellaneous ###
 src/main/resources/application-local.yml
+
+### Database Backups ###
+/sql/backup/
