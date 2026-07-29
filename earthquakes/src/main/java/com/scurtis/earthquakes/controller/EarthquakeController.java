@@ -109,10 +109,10 @@ public class EarthquakeController {
      *
      * @return success message indicating the index has been recreated and the record count loaded.
      */
-    @PutMapping("earthquake/index")
-    public Mono<String> recreateEarthquakeIndex() {
+    @PutMapping("earthquake/es-index")
+    public Mono<String> recreateEarthquakeESIndex() {
         log.info("EarthquakeController -> recreateEarthquakeIndex");
-        return elasticsearchIndexService.recreateIndex();
+        return elasticsearchIndexService.recreateESIndex();
     }
 
 }

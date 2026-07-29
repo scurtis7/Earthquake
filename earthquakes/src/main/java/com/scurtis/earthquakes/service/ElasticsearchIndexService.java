@@ -28,14 +28,14 @@ public class ElasticsearchIndexService {
     private final ReactiveElasticsearchOperations reactiveElasticsearchOperations;
     private final EarthquakeRepository earthquakeRepository;
 
-    public Mono<String> recreateIndex() {
+    public Mono<String> recreateESIndex() {
         return Mono.defer(() -> {
             log.info("ElasticsearchIndexService -> recreateIndex(index:{})", ES_INDEX_NAME);
             StopWatch stopWatch = new StopWatch("ElasticsearchIndexService.recreateIndex");
             stopWatch.start();
             ReactiveIndexOperations indexOps = reactiveElasticsearchOperations.indexOps(IndexCoordinates.of(ES_INDEX_NAME));
             Document mapping = loadMapping();
-            return recreateIndex(indexOps, mapping)
+            return recreateESIndex(indexOps, mapping)
                 .then(Mono.defer(this::loadData))
                 .map(loaded -> String.format("Index '%s' has been recreated and %d record(s) have been loaded", ES_INDEX_NAME, loaded))
                 .doOnNext(log::debug)
@@ -48,7 +48,7 @@ public class ElasticsearchIndexService {
         });
     }
 
-    private Mono<Boolean> recreateIndex(ReactiveIndexOperations indexOps, Document mapping) {
+    private Mono<Boolean> recreateESIndex(ReactiveIndexOperations indexOps, Document mapping) {
         return indexOps.exists()
             .flatMap(exists -> exists ? indexOps.delete() : Mono.just(false))
             .then(Mono.defer(indexOps::create))

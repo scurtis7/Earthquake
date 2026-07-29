@@ -53,7 +53,7 @@ class ElasticsearchIndexServiceTest {
         when(reactiveElasticsearchOperations.save(any(Flux.class), eq(IndexCoordinates.of(ES_INDEX_NAME)), eq(ES_LOAD_BATCH_SIZE)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        String result = elasticsearchIndexService.recreateIndex().block();
+        String result = elasticsearchIndexService.recreateESIndex().block();
 
         verify(indexOperations, times(1)).delete();
         verify(indexOperations, times(1)).create();
@@ -72,7 +72,7 @@ class ElasticsearchIndexServiceTest {
         when(reactiveElasticsearchOperations.save(any(Flux.class), eq(IndexCoordinates.of(ES_INDEX_NAME)), eq(ES_LOAD_BATCH_SIZE)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        String result = elasticsearchIndexService.recreateIndex().block();
+        String result = elasticsearchIndexService.recreateESIndex().block();
 
         verify(indexOperations, never()).delete();
         verify(indexOperations, times(1)).create();
@@ -85,7 +85,7 @@ class ElasticsearchIndexServiceTest {
         when(reactiveElasticsearchOperations.indexOps(any(IndexCoordinates.class))).thenReturn(indexOperations);
         when(indexOperations.exists()).thenReturn(Mono.error(new RuntimeException("boom")));
 
-        assertThatThrownBy(() -> elasticsearchIndexService.recreateIndex().block())
+        assertThatThrownBy(() -> elasticsearchIndexService.recreateESIndex().block())
             .isInstanceOf(ElasticsearchIndexException.class)
             .hasMessageContaining(ES_INDEX_NAME);
     }

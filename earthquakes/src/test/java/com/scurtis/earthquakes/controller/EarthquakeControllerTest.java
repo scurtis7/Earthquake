@@ -31,7 +31,7 @@ class EarthquakeControllerTest {
 
     @Test
     void recreateEarthquakeIndex_returnsServiceResult() {
-        when(elasticsearchIndexService.recreateIndex()).thenReturn(Mono.just("Index 'earthquake_index' has been recreated"));
+        when(elasticsearchIndexService.recreateESIndex()).thenReturn(Mono.just("Index 'earthquake_index' has been recreated"));
 
         webTestClient.put().uri("/earthquake/index")
             .exchange()
@@ -39,12 +39,12 @@ class EarthquakeControllerTest {
             .expectBody(String.class)
             .isEqualTo("Index 'earthquake_index' has been recreated");
 
-        verify(elasticsearchIndexService).recreateIndex();
+        verify(elasticsearchIndexService).recreateESIndex();
     }
 
     @Test
     void recreateEarthquakeIndex_whenServiceThrows_returns500() {
-        when(elasticsearchIndexService.recreateIndex()).thenReturn(Mono.error(new ElasticsearchIndexException("boom")));
+        when(elasticsearchIndexService.recreateESIndex()).thenReturn(Mono.error(new ElasticsearchIndexException("boom")));
 
         webTestClient.put().uri("/earthquake/index")
             .exchange()
