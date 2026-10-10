@@ -4,16 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Spring Boot (WebFlux) service that fetches earthquake data from the USGS GeoJSON API
-(`https://earthquake.usgs.gov/fdsnws/event/1/query`), aggregates it into daily counts, and
-persists those counts to Postgres via R2DBC so historical analytics can be run without
-re-hitting USGS.
+A Spring Boot (WebFlux) service that fetches earthquake data from the USGS FDSN event API
+(`https://earthquake.usgs.gov/fdsnws/event/1/`), persists both the raw per-event data and
+aggregated year/month/day counts to Postgres via R2DBC so historical analytics can be run without
+re-hitting USGS, and can copy the raw events into Elasticsearch for searching in Kibana.
 
 ## Stack
 
-- Java 21, Maven, Spring Boot 3.4.3 (WebFlux, reactive)
-- R2DBC + PostgreSQL for persistence (`postgres` schema `earthquake`, table `DayCount`)
-- Lombok, Apache Commons Lang3
+- Java 21, Maven, Spring Boot 4.0.6 (WebFlux, reactive)
+- R2DBC + PostgreSQL for persistence (schema `earthquake`, tables `year_count`, `month_count`,
+  `day_count`, `earthquake`)
+- Spring Data Elasticsearch (Elasticsearch/Kibana 9.2.8 via Docker Compose)
+- Spring Boot Actuator, Lombok, Apache Commons Lang3
 
 ## Commands
 
@@ -26,15 +28,16 @@ re-hitting USGS.
   line limit; bound to the `verify` phase, so `mvn verify` always runs it)
 - Run locally: `mvn spring-boot:run -Dspring-boot.run.profiles=local` (see Local setup below)
 
-Coverage is enforced by JaCoCo: `mvn verify` fails if any class drops below 80% line coverage
-(`Application.class` is excluded).
+Coverage is enforced by JaCoCo: `mvn verify` fails if any class drops below 80% line coverage.
+`Application.class` and the `config`, `entity`, `model`, and `repository` packages are excluded.
 
 ## Local setup
 
 The `local` profile (`src/main/resources/application-local.yml`) points at
 `r2dbc:postgresql://localhost:5432/earthquakeDB` with user `postgres` / password `scurtis`,
-and runs the app on port 9777. Postgres runs as a native local install (not containerized) in
-this dev environment. If you don't have a local Postgres install, start one with:
+Elasticsearch at `http://localhost:9200`, and runs the app on port 9777. Postgres runs as a native
+local install (not containerized) in this dev environment. If you don't have a local Postgres
+install, start one with:
 
 ```
 docker run --name postgres -e POSTGRES_PASSWORD=scurtis -d -p 5432:5432 postgres
@@ -43,6 +46,11 @@ docker run --name postgres -e POSTGRES_PASSWORD=scurtis -d -p 5432:5432 postgres
 `PostgresR2dbc` (`config/PostgresR2dbc.java`) binds `spring.r2dbc.{url,username,password}` and
 fails startup via `@PostConstruct` if any are blank — set these (e.g. via `SPRING_R2DBC_URL`,
 etc., or the `local` profile) before running.
+
+There are no schema migrations (no Flyway/Liquibase). The schema must be created manually with
+`sql/init.sql` (`psql -h localhost -U postgres -d earthquakeDB -f sql/init.sql`). `sql/README.md`
+documents init, plus backup/restore via `sql/backup.sh` / `sql/restore.sh`; `sql/earthquakes.sql`
+holds ad hoc reference queries.
 
 Elasticsearch and Kibana run via Docker Compose: `docker-compose.yml` at the repo root defines
 both, pinned to `9.2.8`. Start them with `docker compose up -d` — no prerequisite setup needed,
@@ -59,56 +67,68 @@ Kibana's version must also match its Elasticsearch server's major version or it 
 `elasticsearch-java` version moved to a new Elasticsearch major version and update the image tags
 in `docker-compose.yml` (both services) to match.
 
-Note: the `local` profile sets `spring.flyway.enabled: true`, but there are no Flyway migration
-scripts checked into the repo (nothing under `src/main/resources/db/migration`). The
-`earthquake.DayCount` schema currently has to exist already in the target database; `sql/earthquakes.sql`
-has ad hoc reference queries (not migrations) showing the expected shape:
-`earthquake.DayCount(id, day, count)`.
-
-Tests run against an in-memory H2 database (`application-test.yml`, `r2dbc:h2:mem`) with Flyway
-disabled, so `mvn test` doesn't need a real Postgres instance.
+Tests run against an in-memory H2 database (`src/test/resources/application-test.yml`,
+`r2dbc:h2:mem`), so `mvn test` doesn't need a real Postgres instance.
 
 ## Architecture
 
-Request flow: `EarthquakeController` → `EarthquakeService` → (`EarthquakeConverter` +
-`DayCountRepository`).
+Request flow: `EarthquakeController` → `ValidationService` (input checks) → `EarthquakeService` /
+`ElasticsearchIndexService` → (`EarthquakeConverter` + repositories).
 
 - **`model/`** — DTOs that mirror the USGS GeoJSON response shape (`FeatureCollection` →
-  `List<Feature>`, `Geometry`, `Properties`, `Metadata`). These are only used for
-  deserializing USGS responses, never persisted directly.
-- **`entity/DayCount`** — the persisted row (`id`, `day`, `count`), mapped via Spring Data
-  R2DBC to `earthquake.DayCount`. Implements `Persistable<Integer>` with `isNew()` based on
-  `id == null || id == 0`, because R2DBC can't tell insert from update from a manually
+  `List<Feature>`, `Geometry`, `Properties`, `Metadata`). Only used for deserializing USGS
+  responses; `EarthquakeConverter.toEntity` maps a `Feature` to the persisted `Earthquake`.
+- **`entity/`** — persisted rows, mapped via Spring Data R2DBC to the `earthquake` schema:
+  `YearCount`, `MonthCount`, `DayCount` (`id`, period key string, `count`) and `Earthquake` (one
+  row per USGS event, unique on `featureId`). All implement `Persistable<Integer>` with `isNew()`
+  based on `id == null || id == 0`, because R2DBC can't tell insert from update on a manually
   constructed entity otherwise.
-- **`converter/EarthquakeConverter`** — turns a `FeatureCollection` into a `DayCount`. Notably,
-  it derives the `day` string by parsing it back out of the `metadata.url` (the USGS query URL
-  echoes the `starttime` parameter), not from any field on the response body directly — see
-  `getDay()`.
-- **`service/EarthquakeService`** — has two distinct call patterns:
-    - `getEarthquakesByYearAndMonth` — a single reactive call through the injected `WebClient`,
-      returning `Mono<FeatureCollection>` straight from USGS (no persistence).
-    - `getEarthquakesByYear` / `getDailyCounts` — a **blocking** day-by-day backfill: for each day
-      in the target year it makes a synchronous `RestTemplate` call to USGS, converts the result,
-      looks up any existing row for that day via `repository.findByDay(...).blockFirst()` (to
-      decide insert vs. update), and saves it with `repository.save(...).subscribe()`. This method
-      mixes blocking I/O into an otherwise reactive codebase deliberately — if you touch it, keep
-      in mind it runs on the request thread and does ~365 sequential HTTP calls.
-- **`repository/DayCountRepository`** — `ReactiveCrudRepository`, plus a hand-written `findAll()`
-  (`@Query`) that orders by `day`, overriding the default unordered one.
-- **`config/AppConfig`** — defines the `WebClient` (reactive, base URL = USGS query endpoint,
-  5MB in-memory buffer) and the `RestTemplate` bean used by the blocking backfill path.
-- **`config/PostgresR2dbc`** — `@ConfigurationProperties` for `spring.r2dbc.*`, validated at
-  startup.
+- **`dto/EarthquakeCountDto`** — `(period, date, count)` response shape for the counts endpoint.
+- **`converter/EarthquakeConverter`** — count entities → `EarthquakeCountDto`, and `Feature` →
+  `Earthquake` (epoch millis become UTC `DATE_TIME_FORMATTER` strings; coordinates are joined
+  into a comma-separated string).
+- **`service/ValidationService`** — validates `period` (`year`/`month`/`day`) and `uuuu-MM-dd`
+  dates (`toDate` must be after `fromDate`), throwing `ValidationException`.
+- **`service/EarthquakeService`** — uses two USGS clients from `AppConfig`, both with base URL
+  `https://earthquake.usgs.gov`:
+    - `getUSGSRawData` — a single reactive `WebClient` call to `/query`, returned straight through
+      (no persistence).
+    - `saveUSGSRawData` — a **blocking** `RestClient` call to `/query` for the range; each feature
+      is then upserted into `earthquake` by `featureId` with fire-and-forget `.subscribe()`.
+      `saveUSGSRawDataFromStartDate` loops this month by month from `startDate` to today.
+    - `saveEarthquakeCounts` — loops over each year/month/day in the range calling USGS `/count`.
+      Year and month use `WebClient` with fire-and-forget `.subscribe()`; day uses the blocking
+      `RestClient` and sleeps 1 second between calls because USGS rate-limits (~500 requests per
+      5 minutes). All upsert by period key, only saving when the count changed.
+    - `getEarthquakeCounts` — reads the matching count table between the two period keys, ordered.
 
-There's commented-out scaffolding across `controller`, `service`, `converter`, `repository`, and
-`model/counts/EarthquakeCount` for a not-yet-implemented "counts by year" aggregate endpoint —
-leave it as-is unless you're specifically finishing that feature.
+  The save paths deliberately mix blocking I/O and unawaited subscriptions into an otherwise
+  reactive codebase: they run on the request thread, can make thousands of sequential HTTP calls,
+  and the endpoint can return before every DB write has finished.
+- **`service/ElasticsearchIndexService`** — deletes and recreates the `earthquake_index` index from
+  `src/main/resources/elasticsearch/earthquake-mapping.json`, then bulk-loads every `Earthquake`
+  row from Postgres in batches of 1000.
+- **`repository/`** — `ReactiveCrudRepository`s with derived queries (`findByX`,
+  `findByXBetweenOrderByX`, `findByFeatureId`).
+- **`exception/GlobalExceptionHandler`** — maps `ValidationException` → 400 and
+  `ElasticsearchIndexException` → 500, both as an `ErrorResponse` JSON body.
+- **`config/AppConfig`** — `WebClient` (10MB in-memory buffer) and `RestClient` beans, plus logs
+  `scurtis.app-version` at startup. `config/PostgresR2dbc` validates `spring.r2dbc.*`;
+  `config/CorsGlobalConfig` allows all origins/methods (for the sibling `earthquakes-ui` app).
+
+Shared constants (USGS URL, formatters, error messages, `MAX_DAYS`, Elasticsearch settings) live in
+`common/AppConstants`.
 
 ## Endpoints
 
-| Method | Url                   | Parameters      | Description                                                                                   |
-|:-------|:----------------------|:----------------|:----------------------------------------------------------------------------------------------|
-| GET    | `/earthquakes`        | `year`, `month` | Calls USGS directly for that year/month and returns the raw `FeatureCollection` (no DB write) |
-| GET    | `/earthquakes/range`  | `year`          | Backfills/reads daily counts for that year, one USGS call per day, upserting into Postgres    |
-| GET    | `/earthquakes/counts` | —               | Returns every `DayCount` row in the database, ordered by day                                  |
-| GET    | `/actuator/health`    | —               | Health check                                                                                  |
+All dates are `uuuu-MM-dd`; `period` is `year`, `month`, or `day`.
+
+| Method | Url                         | Parameters                     | Description                                                                                    |
+|:-------|:----------------------------|:-------------------------------|:-----------------------------------------------------------------------------------------------|
+| GET    | `/earthquake/raw`           | `fromDate`, `toDate`           | Calls USGS `/query` and returns the raw `FeatureCollection` (no DB write)                      |
+| GET    | `/earthquake/raw/save`      | `fromDate`, `toDate`           | Calls USGS `/query` for the range and upserts each event into `earthquake`                     |
+| GET    | `/earthquake/raw/save/from` | `startDate`                    | Same as above, month by month from `startDate` through today                                   |
+| GET    | `/earthquake/counts/save`   | `period`, `fromDate`, `toDate` | Calls USGS `/count` per year/month/day in the range and upserts into the matching count table  |
+| GET    | `/earthquake/counts`        | `period`, `fromDate`, `toDate` | Returns saved counts for the range as `EarthquakeCountDto`s, ordered by period                 |
+| PUT    | `/earthquake/es-index`      | —                              | Recreates `earthquake_index` in Elasticsearch and reloads every `earthquake` row (~30 minutes) |
+| GET    | `/actuator/health`          | —                              | Health check                                                                                   |

@@ -106,6 +106,7 @@ public class EarthquakeController {
      * This method (re)creates the earthquake Elasticsearch index from its fixed mapping and reloads it
      * with every earthquake record currently stored in Postgres. If the index already exists it is
      * deleted first, so every call leaves a fresh index containing a full copy of the database.
+     * NOTE: This call takes approximately ~30 minutes to complete.
      *
      * @return success message indicating the index has been recreated and the record count loaded.
      */

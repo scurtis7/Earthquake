@@ -21,8 +21,8 @@ public class AppConstants {
     public static final String FROM_DATE_ERROR_MSG = "fromDate is required and must be in yyyy-MM-dd format";
     public static final String TO_DATE_ERROR_MSG = "toDate is required and must be in yyyy-MM-dd format";
     public static final String DATE_RANGE_ERROR_MSG = "toDate must be greater than fromDate";
-    public static final String MAX_DAYS_ERROR_MSG = "The maximum number of days allowed to process is 999";
     public static final int MAX_DAYS = 8000;
+    public static final String MAX_DAYS_ERROR_MSG = "The maximum number of days allowed to process is " + MAX_DAYS;
     // Elasticsearch
     public static final String ES_INDEX_NAME = "earthquake_index";
     public static final String ES_MAPPING_RESOURCE_PATH = "elasticsearch/earthquake-mapping.json";

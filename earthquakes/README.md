@@ -73,13 +73,20 @@ library major-version mismatch after a Spring Boot upgrade) will break the conne
 
 ## Environment
 
-In order to run the Earthquakes application, the following environment variables must be set:
+In order to run the Earthquakes application, the following environment variables must be set
+(the application fails at startup if any of the database variables are blank):
 
-| VARIABLE                   | Description                          |
-|:---------------------------|:-------------------------------------|
-| SPRING_DATASOURCE_URL      | The URL to the Postgresql database   |
-| SPRING_DATASOURCE_USERNAME | Username for the Postgresql database |
-| SPRING_DATASOURCE_PASSWORD | Password for the Postgresql database |
+| VARIABLE                  | Description                                                                                      |
+|:--------------------------|:-------------------------------------------------------------------------------------------------|
+| SPRING_R2DBC_URL          | The R2DBC URL to the Postgresql database (e.g. `r2dbc:postgresql://localhost:5432/earthquakeDB`) |
+| SPRING_R2DBC_USERNAME     | Username for the Postgresql database                                                             |
+| SPRING_R2DBC_PASSWORD     | Password for the Postgresql database                                                             |
+| SPRING_ELASTICSEARCH_URIS | The URL to Elasticsearch (e.g. `http://localhost:9200`)                                          |
+
+For local development, the `local` profile (`src/main/resources/application-local.yml`) already sets
+all of these, so you can run the application with:
+
+`mvn spring-boot:run -Dspring-boot.run.profiles=local`
 
 ## Endpoints
 
@@ -87,13 +94,18 @@ A brief description of the endpoints can be found in this section.
 
 ### REST Endpoint
 
-This endpoint will be called to...
+Available REST endpoints
 
-| Method | Url                    | Parameters          | Description                                                                                 |
-|:-------|:-----------------------|:--------------------|:--------------------------------------------------------------------------------------------|
-| GET    | .../earthquakes/       | year=YYYY, month=MM | Calls the USGS site to get earthquakes for that year and month and loads it to the database |
-| GET    | .../earthquakes/range  | year=YYYY           | Reads from the database and returns earthquakes for that year                               |
-| GET    | .../earthquakes/counts |                     | Reads and returns everything in the database at the moment.  (need to change this)          |
+All dates use the `YYYY-MM-DD` format, and `toDate` must be after `fromDate`.
+
+| Method | Url                          | Parameters                                      | Description                                                                                                            |
+|:-------|:-----------------------------|:------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------|
+| GET    | .../earthquake/raw           | fromDate, toDate                                | Calls the USGS site and returns the raw earthquake data for the date range (nothing is saved to the database)          |
+| GET    | .../earthquake/raw/save      | fromDate, toDate                                | Calls the USGS site for every day in the date range and saves the raw earthquake data to the database                  |
+| GET    | .../earthquake/raw/save/from | startDate                                       | Calls the USGS site for every day from `startDate` up to today and saves the raw earthquake data to the database       |
+| GET    | .../earthquake/counts/save   | period=`year`\|`month`\|`day`, fromDate, toDate | Calls the USGS site to get the number of earthquakes per period in the date range and saves the counts to the database |
+| GET    | .../earthquake/counts        | period=`year`\|`month`\|`day`, fromDate, toDate | Reads the saved earthquake counts for each period in the date range from the database                                  |
+| PUT    | .../earthquake/es-index      |                                                 | Recreates the Elasticsearch earthquake index and reloads it with every earthquake in the database (takes ~30 minutes)  |
 
 ### Health Check Endpoint
 
