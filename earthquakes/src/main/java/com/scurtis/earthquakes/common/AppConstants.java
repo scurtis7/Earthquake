@@ -27,6 +27,10 @@ public class AppConstants {
     public static final String ES_INDEX_NAME = "earthquake_index";
     public static final String ES_MAPPING_RESOURCE_PATH = "elasticsearch/earthquake-mapping.json";
     public static final int ES_LOAD_BATCH_SIZE = 1000;
+    // Period Lengths
+    public static final int PERIOD_LENGTH_DAY = 10;
+    public static final int PERIOD_LENGTH_MONTH = 7;
+    public static final int PERIOD_LENGTH_YEAR = 4;
 
     private AppConstants() {
         // Make the constructor private to prevent instantiation

@@ -116,4 +116,18 @@ public class EarthquakeController {
         return elasticsearchIndexService.recreateESIndex();
     }
 
+
+
+
+
+//    @GetMapping("earthquake/counts/period")
+//    public Flux<PeriodCount> getEarthquakeCountsByPeriod(@RequestParam() String period, @RequestParam() String fromDate, @RequestParam() String toDate) {
+//        log.info("EarthquakeController -> getEarthquakeCountsByPeriod");
+//        validationService.validateDateInputs(fromDate, toDate);
+//        return earthquakeService.getEarthquakeCountsByPeriod(period, fromDate, toDate);
+//    }
+
+
+
+
 }
