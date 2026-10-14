@@ -22,7 +22,7 @@ import static com.scurtis.earthquakes.common.AppConstants.TO_DATE_ERROR_MSG;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class ValidationServiceTest {
+class ValidationServiceTest {
 
     private final ValidationService validationService = new ValidationService();
 

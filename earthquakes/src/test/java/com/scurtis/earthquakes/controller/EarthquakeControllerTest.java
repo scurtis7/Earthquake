@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(EarthquakeController.class)
-public class EarthquakeControllerTest {
+class EarthquakeControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
