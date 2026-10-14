@@ -79,7 +79,7 @@ public class EarthquakeController {
     @GetMapping("earthquake/counts/save")
     public String saveEarthquakeCounts(@RequestParam() String period, @RequestParam() String fromDate, @RequestParam() String toDate) {
         log.info("EarthquakeController -> saveEarthquakeCounts");
-        validationService.ValidateInputs(period, fromDate, toDate);
+        validationService.validateInputs(period, fromDate, toDate);
         earthquakeService.saveEarthquakeCounts(period, fromDate, toDate);
         String msg = String.format("Counts have been saved for the '%s' period from '%s' to '%s'", period, fromDate, toDate);
         log.debug(msg);

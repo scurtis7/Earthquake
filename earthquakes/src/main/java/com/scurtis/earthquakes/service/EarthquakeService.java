@@ -70,13 +70,10 @@ public class EarthquakeService {
         stopWatch.start();
         // switched to getting counts from database so I can filter out any counts not from earthquakes
         if (PERIOD_YEAR.equalsIgnoreCase(period)) {
-//            saveYearCounts(fromDate, toDate);
             saveCountsByYear(fromDate, toDate);
         } else if (PERIOD_MONTH.equalsIgnoreCase(period)) {
-//            saveMonthCounts(fromDate, toDate);
             saveCountsByMonth(fromDate, toDate);
         } else {
-//            saveDayCounts(fromDate, toDate);
             saveCountsByDay(fromDate, toDate);
         }
         stopWatch.stop();
@@ -157,184 +154,6 @@ public class EarthquakeService {
                 }))
             .subscribe();
     }
-
-//    private void saveYearCounts(String fromDate, String toDate) {
-//        LocalDate currentDate = LocalDate.now();
-//        LocalDate startDate = LocalDate.of(Integer.parseInt(fromDate.substring(0, 4)), 1, 1);
-//        LocalDate endDate = LocalDate.of(Integer.parseInt(toDate.substring(0, 4)), 1, 1).plusYears(1);
-//        int totalYears = (int) ChronoUnit.YEARS.between(startDate, endDate);
-//        log.debug("Years between {} and {} is: {}", startDate, endDate, totalYears);
-//        LocalDate endingDate = startDate.plusYears(1);
-//        for (int i = 0; i < totalYears; i++) {
-//            log.debug("calling saveYearCount(startDate:{}, endingDate:{})", startDate, endingDate);
-//            saveYearCount(startDate, endingDate).subscribe();
-//
-//            startDate = startDate.plusYears(1);
-//            endingDate = endingDate.plusYears(1);
-//            //log.debug("   new startDate:{}, new endingDate:{})", startDate, endingDate);
-//
-//            if (startDate.isEqual(endDate) || startDate.isAfter(currentDate)) {
-//                break;
-//            }
-//        }
-//    }
-//
-//    private Mono<YearCount> saveYearCount(LocalDate startDate, LocalDate endDate) {
-//        //log.debug("In method saveYearCount() -> Start Date:{} -> End Date:{}", startDate, endDate);
-//        String year = String.valueOf(startDate.getYear());
-//        return webClient.get()
-//            .uri(uriBuilder -> uriBuilder
-//                .path("/fdsnws/event/1/count")
-//                .queryParam("starttime", startDate)
-//                .queryParam("endtime", endDate)
-//                .build())
-//            .retrieve()
-//            .bodyToMono(String.class)
-//            .defaultIfEmpty("0")
-//            .map(Integer::parseInt)
-//            .flatMap(count -> yearCountRepository.findByYear(year)
-//                .map(Optional::of)
-//                .defaultIfEmpty(Optional.empty())
-//                .flatMap(existing -> {
-//                    if (existing.isEmpty()) {
-//                        YearCount yearCount = new YearCount();
-//                        yearCount.setYear(year);
-//                        yearCount.setCount(count);
-//                        //log.debug("Saving new....");
-//                        return yearCountRepository.save(yearCount);
-//                    }
-//                    YearCount original = existing.get();
-//                    if (original.getCount() != count) {
-//                        original.setCount(count);
-//                        //log.debug("Saving updated....");
-//                        return yearCountRepository.save(original);
-//                    } else {
-//                        //log.debug("No changes needed, returning original");
-//                        return Mono.just(original);
-//                    }
-//                }));
-//    }
-//
-//    private void saveMonthCounts(String fromDate, String toDate) {
-//        LocalDate currentDate = LocalDate.now();
-//        LocalDate startDate = LocalDate.parse(fromDate, DATE_FORMATTER).withDayOfMonth(1);
-//        LocalDate endDate = LocalDate.parse(toDate, DATE_FORMATTER).withDayOfMonth(1);
-//        int totalMonths = (int) ChronoUnit.MONTHS.between(startDate, endDate);
-//        log.debug("Months between {} and {} is: {}", startDate, endDate, totalMonths);
-//        LocalDate endingDate = startDate.plusMonths(1);
-//        for (int i = 0; i < totalMonths; i++) {
-//            log.debug("calling saveMonthCount(startDate:{}, endingDate:{})", startDate, endingDate);
-//            saveMonthCount(startDate, endingDate).subscribe();
-//
-//            startDate = startDate.plusMonths(1);
-//            endingDate = endingDate.plusMonths(1);
-//            //log.debug("   new startDate:{}, new endingDate:{})", startDate, endingDate);
-//
-//            if (startDate.isEqual(endDate) || startDate.isAfter(currentDate)) {
-//                break;
-//            }
-//        }
-//    }
-//
-//    private Mono<MonthCount> saveMonthCount(LocalDate startDate, LocalDate endDate) {
-//        //log.debug("In method saveMonthCount() -> Start Date:{} -> End Date:{}", startDate, endDate);
-//        String month = startDate.format(YEAR_MONTH_FORMATTER);
-//        return webClient.get()
-//            .uri(uriBuilder -> uriBuilder
-//                .path("/fdsnws/event/1/count")
-//                .queryParam("starttime", startDate)
-//                .queryParam("endtime", endDate)
-//                .build())
-//            .retrieve()
-//            .bodyToMono(String.class)
-//            .defaultIfEmpty("0")
-//            .map(Integer::parseInt)
-//            .flatMap(count -> monthCountRepository.findByMonth(month)
-//                .map(Optional::of)
-//                .defaultIfEmpty(Optional.empty())
-//                .flatMap(existing -> {
-//                    if (existing.isEmpty()) {
-//                        MonthCount monthCount = new MonthCount();
-//                        monthCount.setMonth(month);
-//                        monthCount.setCount(count);
-//                        //log.debug("Saving new....");
-//                        return monthCountRepository.save(monthCount);
-//                    }
-//                    MonthCount original = existing.get();
-//                    if (original.getCount() != count) {
-//                        original.setCount(count);
-//                        //log.debug("Saving updated....");
-//                        return monthCountRepository.save(original);
-//                    } else {
-//                        //log.debug("No changes needed, returning original");
-//                        return Mono.just(original);
-//                    }
-//                }));
-//    }
-//
-//    private void saveDayCounts(String fromDate, String toDate) {
-//        LocalDate currentDate = LocalDate.now();
-//        LocalDate startDate = LocalDate.parse(fromDate, DATE_FORMATTER);
-//        LocalDate endDate = LocalDate.parse(toDate, DATE_FORMATTER);
-//        int totalDays = (int) ChronoUnit.DAYS.between(startDate, endDate);
-//        log.debug("Days between {} and {} is: {}", startDate, endDate, totalDays);
-//        LocalDate endingDate = startDate.plusDays(1);
-//        for (int i = 0; i < totalDays; i++) {
-//            log.debug("calling saveDayCount(startDate:{}, endingDate:{})", startDate, endingDate);
-//            saveDayCount(startDate, endingDate);
-//
-//            startDate = startDate.plusDays(1);
-//            endingDate = endingDate.plusDays(1);
-//            //log.debug("   new startDate:{}, new endingDate:{})", startDate, endingDate);
-//
-//            if (startDate.isEqual(endDate) || startDate.isAfter(currentDate)) {
-//                break;
-//            }
-//            // USGS only allows 500 requests in a 5-minute period.
-//            // A 1-second delay seems to slow it down enough.
-//            try {
-//                TimeUnit.SECONDS.sleep(1);
-//            } catch (InterruptedException e) {
-//                // Restore interrupted status if thread is woken up early
-//                Thread.currentThread().interrupt();
-//            }
-//        }
-//    }
-//
-//    private void saveDayCount(LocalDate startDate, LocalDate endDate) {
-//        String day = startDate.format(DATE_FORMATTER);
-//        String result = restClient.get()
-//            .uri(uriBuilder -> uriBuilder
-//                .path("/fdsnws/event/1/count")
-//                .queryParam("starttime", startDate)
-//                .queryParam("endtime", endDate)
-//                .build())
-//            .retrieve()
-//            .body(String.class);
-//        int count = result != null ? Integer.parseInt(result) : 0;
-//        dayCountRepository.findByDay(day)
-//            .map(Optional::of)
-//            .defaultIfEmpty(Optional.empty())
-//            .flatMap(existing -> {
-//                if (existing.isEmpty()) {
-//                    DayCount dayCount = new DayCount();
-//                    dayCount.setDay(day);
-//                    dayCount.setCount(count);
-//                    //log.debug("Saving new....");
-//                    return dayCountRepository.save(dayCount);
-//                }
-//                DayCount original = existing.get();
-//                if (original.getCount() != count) {
-//                    original.setCount(count);
-//                    //log.debug("Saving updated....");
-//                    return dayCountRepository.save(original);
-//                } else {
-//                    //log.debug("No changes needed, returning original");
-//                    return Mono.just(original);
-//                }
-//            })
-//            .subscribe();
-//    }
 
     public Mono<List<EarthquakeCountDto>> getEarthquakeCounts(String period, String fromDate, String toDate) {
         log.info("EarthquakeService -> getEarthquakeCounts(period:{}, fromDate:{}, toDate:{})", period, fromDate, toDate);
@@ -423,6 +242,5 @@ public class EarthquakeService {
                     return earthquakeRepository.save(earthquake);
                 }).subscribe());
     }
-
 
 }

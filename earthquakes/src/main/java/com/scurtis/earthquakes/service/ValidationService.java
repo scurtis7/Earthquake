@@ -21,7 +21,7 @@ import static com.scurtis.earthquakes.common.AppConstants.TO_DATE_ERROR_MSG;
 @Service
 public class ValidationService {
 
-    public void ValidateInputs(String period, String fromDate, String toDate) {
+    public void validateInputs(String period, String fromDate, String toDate) {
         validatePeriodInput(period);
         validateDateInputs(fromDate, toDate);
         if (PERIOD_DAY.equals(period)) {

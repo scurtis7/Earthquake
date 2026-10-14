@@ -13,10 +13,4 @@ public interface DayCountRepository extends ReactiveCrudRepository<DayCount, Int
 
     Flux<DayCount> findByDayBetweenOrderByDay(String fromDate, String toDate);
 
-//    @Query("SELECT * FROM earthquake.DayCount ORDER BY day")
-//    Flux<DayCount> findAll();
-//
-//    @Query("SELECT * FROM earthquake.DayCount WHERE day LIKE '?1'")
-//    Flux<DayCount> findSumByYear(String year);
-
 }
