@@ -80,8 +80,22 @@ public class EarthquakeService {
         log.debug(stopWatch.shortSummary());
     }
 
+    public void saveAllEarthquakeCounts(String fromDate, String toDate) {
+        log.info("EarthquakeService -> saveAllEarthquakeCounts(fromDate:{}, toDate:{})", fromDate, toDate);
+        StopWatch stopWatch = new StopWatch("EarthquakeService.saveAllEarthquakeCounts");
+        stopWatch.start();
+        saveCountsByYear(fromDate, toDate);
+        saveCountsByMonth(fromDate, toDate);
+        saveCountsByDay(fromDate, toDate);
+        stopWatch.stop();
+        log.debug(stopWatch.shortSummary());
+    }
+
     private void saveCountsByYear(String fromDate, String toDate) {
-        earthquakeRepository.getEarthquakeCountsByPeriod(PERIOD_LENGTH_YEAR, fromDate, toDate)
+        String fromYear = LocalDate.parse(fromDate, DATE_FORMATTER).format(YEAR_FORMATTER);
+        String toYear = LocalDate.parse(toDate, DATE_FORMATTER).plusYears(1).format(YEAR_FORMATTER);
+
+        earthquakeRepository.getEarthquakeCountsByPeriod(PERIOD_LENGTH_YEAR, fromYear, toYear)
             .flatMap(periodCount -> yearCountRepository.findByYear(periodCount.getPeriod())
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
@@ -106,7 +120,10 @@ public class EarthquakeService {
     }
 
     private void saveCountsByMonth(String fromDate, String toDate) {
-        earthquakeRepository.getEarthquakeCountsByPeriod(PERIOD_LENGTH_MONTH, fromDate, toDate)
+        String fromMonth = LocalDate.parse(fromDate, DATE_FORMATTER).format(YEAR_MONTH_FORMATTER);
+        String toMonth = LocalDate.parse(toDate, DATE_FORMATTER).plusMonths(1).format(YEAR_MONTH_FORMATTER);
+
+        earthquakeRepository.getEarthquakeCountsByPeriod(PERIOD_LENGTH_MONTH, fromMonth, toMonth)
             .flatMap(periodCount -> monthCountRepository.findByMonth(periodCount.getPeriod())
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
@@ -131,7 +148,10 @@ public class EarthquakeService {
     }
 
     private void saveCountsByDay(String fromDate, String toDate) {
-        earthquakeRepository.getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, fromDate, toDate)
+        String fromDay = LocalDate.parse(fromDate, DATE_FORMATTER).format(DATE_FORMATTER);
+        String toDay = LocalDate.parse(toDate, DATE_FORMATTER).plusDays(1).format(DATE_FORMATTER);
+
+        earthquakeRepository.getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, fromDay, toDay)
             .flatMap(periodCount -> dayCountRepository.findByDay(periodCount.getPeriod())
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())

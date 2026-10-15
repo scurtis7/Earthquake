@@ -63,6 +63,15 @@ export class AdminComponent implements OnInit {
       });
   }
 
+  updateCounts() {
+    const fromDate = this.formatDate(this.startDate);
+    const toDate = this.formatDate(this.endDate);
+    this.restService.updateEarthquakeCounts(fromDate, toDate)
+      .subscribe(response => {
+        this.loadResponse = response;
+      });
+  }
+
   private formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,7 +79,4 @@ export class AdminComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  protected updateCounts() {
-    alert('Update Counts');
-  }
 }

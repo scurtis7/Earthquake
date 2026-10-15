@@ -1,6 +1,6 @@
 <div class="card admin-layout">
   <h2>Load Raw Earthquake Data</h2>
-  <h3>Last Date: {{lastDate}}</h3>
+  <h3>Last Date: {{ lastDate }}</h3>
   <div class="filters-row">
     <div class="filter-field">
       <label for="startDate">Start Date (inclusive)</label>
@@ -33,5 +33,5 @@
       icon="pi pi-refresh"
       (onClick)="updateCounts()"/>
   </div>
-  <div>{{loadResponse}}</div>
+  <div>{{ loadResponse }}</div>
 </div>

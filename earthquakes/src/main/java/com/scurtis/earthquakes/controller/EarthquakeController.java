@@ -86,6 +86,17 @@ public class EarthquakeController {
         return msg;
     }
 
+    @GetMapping("earthquake/counts/save/all")
+    public String saveAllEarthquakeCounts(@RequestParam() String fromDate, @RequestParam() String toDate) {
+        log.info("EarthquakeController -> saveAllEarthquakeCounts");
+        validationService.validateDateInputs(fromDate, toDate);
+        earthquakeService.saveAllEarthquakeCounts(fromDate, toDate);
+        String msg = String.format("All counts have been saved from '%s' to '%s'", fromDate, toDate);
+        log.debug(msg);
+        return msg;
+    }
+
+
     /**
      * This method will query the database in the appropriate table to get the number of earthquakes
      * for the specified time period.
@@ -102,6 +113,11 @@ public class EarthquakeController {
         return earthquakeService.getEarthquakeCounts(period, fromDate, toDate);
     }
 
+    /**
+     * This method gets the latest date in the earthquake database.
+     *
+     * @return latest earthquake date in the database
+     */
     @GetMapping("earthquake/last/date")
     public Mono<String> getEarthquakeLastDate() {
         log.info("EarthquakeController -> getEarthquakeLastDate");
