@@ -23,4 +23,7 @@ public interface EarthquakeRepository extends ReactiveCrudRepository<Earthquake,
             + "    ORDER BY period")
     Flux<PeriodCount> getEarthquakeCountsByPeriod(int length, String startDate, String endDate);
 
+    @Query(value = "SELECT LEFT(MAX(date_time), 10) AS latest_date FROM earthquake.earthquake")
+    Mono<String> getEarthquakeLastDate();
+
 }

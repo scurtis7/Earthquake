@@ -1,6 +1,37 @@
-<h1>Admin Page - Not Implemented Yet</h1>
-<p style="width: 600px">
-  I want to use this page to call the other rest endpoints in the server
-  to save counts and raw data.  There are also endpoints to get raw data
-  from USGS and get raw data from the database.
-</p>
+<div class="card admin-layout">
+  <h2>Load Raw Earthquake Data</h2>
+  <h3>Last Date: {{lastDate}}</h3>
+  <div class="filters-row">
+    <div class="filter-field">
+      <label for="startDate">Start Date (inclusive)</label>
+      <p-datepicker
+        inputId="startDate"
+        [(ngModel)]="startDate"
+        [minDate]="minDate"
+        [maxDate]="startMaxDate"
+        dateFormat="yy-mm-dd"
+        showIcon></p-datepicker>
+    </div>
+    <div class="filter-field">
+      <label for="endDate">End Date (exclusive)</label>
+      <p-datepicker
+        inputId="endDate"
+        [(ngModel)]="endDate"
+        [minDate]="endMinDate"
+        [maxDate]="maxDate"
+        dateFormat="yy-mm-dd"
+        showIcon></p-datepicker>
+    </div>
+    <p-button
+      id="loadButton"
+      label="Load Data"
+      icon="pi pi-download"
+      (onClick)="loadData()"/>
+    <p-button
+      id="updateCounts"
+      label="Update Counts"
+      icon="pi pi-refresh"
+      (onClick)="updateCounts()"/>
+  </div>
+  <div>{{loadResponse}}</div>
+</div>

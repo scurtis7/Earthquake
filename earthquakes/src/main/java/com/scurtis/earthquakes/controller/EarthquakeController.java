@@ -41,8 +41,8 @@ public class EarthquakeController {
      * This method calls the USGS earthquake API to get the raw earthquake data for every day in the range
      * specified and save them to the database.
      *
-     * @param fromDate the date to start querying from in uuuu-MM-dd format.
-     * @param toDate   the ending date of the query in uuuu-MM-dd format.
+     * @param fromDate the date to start querying from in uuuu-MM-dd format (inclusive).
+     * @param toDate   the ending date of the query in uuuu-MM-dd format (exclusive).
      * @return success message indicating the call has finished.
      */
     @GetMapping("earthquake/raw/save")
@@ -68,7 +68,7 @@ public class EarthquakeController {
     }
 
     /**
-     * This method will call the USGS earthquake API to get the number of earthquakes for the specified time
+     * This method will get the number of earthquakes from the database for the specified time
      * period and save them to the database.
      *
      * @param period   string value of either 'year', 'month' or 'day'.
@@ -100,6 +100,12 @@ public class EarthquakeController {
         log.info("EarthquakeController -> getEarthquakeCounts");
         validationService.validateDateInputs(fromDate, toDate);
         return earthquakeService.getEarthquakeCounts(period, fromDate, toDate);
+    }
+
+    @GetMapping("earthquake/last/date")
+    public Mono<String> getEarthquakeLastDate() {
+        log.info("EarthquakeController -> getEarthquakeLastDate");
+        return earthquakeService.getEarthquakeLastDate();
     }
 
     /**

@@ -177,6 +177,10 @@ public class EarthquakeService {
             .collectList();
     }
 
+    public Mono<String> getEarthquakeLastDate() {
+        return earthquakeRepository.getEarthquakeLastDate();
+    }
+
     public void saveUSGSRawDataFromStartDate(String fromDate) {
         String currentDate = LocalDate.now().format(DATE_FORMATTER);
         LocalDate endDate = LocalDate.parse(currentDate, DATE_FORMATTER).plusDays(1);

@@ -16,6 +16,16 @@ export class RestService {
     return this.http.get<Count[]>(url);
   }
 
+  public getLastDate(): Observable<string> {
+    const url = this.getBaseUrl() + '/last/date';
+    return this.http.get(url, { responseType: 'text' });
+  }
+
+  public updateEarthquakes(fromDate: string, toDate: string): Observable<string> {
+    const url = this.getBaseUrl() + '/raw/save?fromDate=' + fromDate + '&toDate=' + toDate;
+    return this.http.get(url, { responseType: 'text' });
+  }
+
   private getBaseUrl(): string {
     return "http://localhost:9777/earthquake";
   }
