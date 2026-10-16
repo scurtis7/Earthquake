@@ -26,7 +26,7 @@ The app persists to four tables in the `earthquake` schema, mapped by the classe
 
 If you're setting up Postgres from scratch (e.g. a new machine, or the container from the root
 `README.md`), create the database and then run [`init.sql`](./init.sql) to create the schema and
-table:
+tables:
 
 ```
 /Library/PostgreSQL/16/bin/createdb -h localhost -U postgres earthquakeDB

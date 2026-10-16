@@ -1,5 +1,5 @@
 -- Fresh database init script for the Earthquakes app.
--- Run this against a new Postgres instance to create the schema/table the app expects.
+-- Run this against a new Postgres instance to create the schema and tables the app expects.
 --
 -- Usage:
 --   psql -h localhost -U postgres -d earthquakeDB -f sql/init.sql
