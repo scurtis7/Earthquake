@@ -5,7 +5,7 @@ This app uses a local (non-containerized) PostgreSQL install. Everything below a
 
 * Host: `localhost`
 * Port: `5432`
-* Database: `earthquakeDB`
+* Database: `earthquake`
 * User: `postgres`
 * Password: `scurtis`
 
@@ -29,15 +29,15 @@ If you're setting up Postgres from scratch (e.g. a new machine, or the container
 tables:
 
 ```
-/Library/PostgreSQL/16/bin/createdb -h localhost -U postgres earthquakeDB
-/Library/PostgreSQL/16/bin/psql -h localhost -U postgres -d earthquakeDB -f sql/init.sql
+/Library/PostgreSQL/16/bin/createdb -h localhost -U postgres earthquake
+/Library/PostgreSQL/16/bin/psql -h localhost -U postgres -d earthquake -f sql/init.sql
 ```
 
 `init.sql` is idempotent (`CREATE SCHEMA/TABLE IF NOT EXISTS`), so it's safe to re-run.
 
 ## 2. Backup
 
-[`backup.sh`](./backup.sh) dumps `earthquakeDB` to a timestamped custom-format file using
+[`backup.sh`](./backup.sh) dumps `earthquake` to a timestamped custom-format file using
 `pg_dump`, defaulting to `./backups/`:
 
 ```
@@ -55,12 +55,12 @@ Override connection details via env vars (`PGHOST`, `PGPORT`, `PGUSER`, `PGDATAB
 
 ## 3. Restore
 
-[`restore.sh`](./restore.sh) restores `earthquakeDB` from a dump file produced by `backup.sh`.
+[`restore.sh`](./restore.sh) restores `earthquake` from a dump file produced by `backup.sh`.
 **This drops and recreates the target database first**, so anything currently in it is lost —
 the script asks for confirmation before doing so.
 
 ```
-./sql/restore.sh ./backups/earthquakeDB_20260729_120000.dump
+./sql/restore.sh ./backups/earthquake_20260729_120000.dump
 ```
 
 Same env var overrides as `backup.sh` apply.

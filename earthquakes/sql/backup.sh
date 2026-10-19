@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Backs up the earthquakeDB database to a timestamped custom-format dump file.
+# Backs up the earthquake database to a timestamped custom-format dump file.
 #
 # Usage:
 #   ./sql/backup.sh [output-dir]
@@ -9,7 +9,7 @@
 #   PGHOST     (default: localhost)
 #   PGPORT     (default: 5432)
 #   PGUSER     (default: postgres)
-#   PGDATABASE (default: earthquakeDB)
+#   PGDATABASE (default: earthquake)
 #   PGPASSWORD (default: scurtis)
 #   PG_BIN     (default: /Library/PostgreSQL/16/bin - where pg_dump lives on this machine's
 #               desktop Postgres install, since it isn't on PATH)
@@ -19,7 +19,7 @@ set -euo pipefail
 PGHOST="${PGHOST:-localhost}"
 PGPORT="${PGPORT:-5432}"
 PGUSER="${PGUSER:-postgres}"
-PGDATABASE="${PGDATABASE:-earthquakeDB}"
+PGDATABASE="${PGDATABASE:-earthquake}"
 export PGPASSWORD="${PGPASSWORD:-scurtis}"
 PG_BIN="${PG_BIN:-/Library/PostgreSQL/16/bin}"
 

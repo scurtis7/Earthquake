@@ -1,29 +1,29 @@
 
 
-select * from "earthquakeDB".earthquake.year_count order by year;
-select * from "earthquakeDB".earthquake.year_count order by year DESC;
-select * from "earthquakeDB".earthquake.year_count where year >= '1900-01-01' and year <= '1910-02-01' order by year;
-select count(*) from "earthquakeDB".earthquake.year_count
+select * from earthquake.earthquake.year_count order by year;
+select * from earthquake.earthquake.year_count order by year DESC;
+select * from earthquake.earthquake.year_count where year >= '1900-01-01' and year <= '1910-02-01' order by year;
+select count(*) from earthquake.earthquake.year_count
 
-select * from "earthquakeDB".earthquake.month_count order by month;
-select * from "earthquakeDB".earthquake.month_count order by month DESC;
-select * from "earthquakeDB".earthquake.month_count order by count DESC;
-select count(*) from "earthquakeDB".earthquake.month_count
+select * from earthquake.earthquake.month_count order by month;
+select * from earthquake.earthquake.month_count order by month DESC;
+select * from earthquake.earthquake.month_count order by count DESC;
+select count(*) from earthquake.earthquake.month_count
 
-select * from "earthquakeDB".earthquake.day_count order by day;
-select * from "earthquakeDB".earthquake.day_count order by day DESC;
-select * from "earthquakeDB".earthquake.day_count where day like '1910%' order by day;
-select count(*) from "earthquakeDB".earthquake.day_count;
+select * from earthquake.earthquake.day_count order by day;
+select * from earthquake.earthquake.day_count order by day DESC;
+select * from earthquake.earthquake.day_count where day like '1910%' order by day;
+select count(*) from earthquake.earthquake.day_count;
 
-select * from "earthquakeDB".earthquake.earthquake order by date_time;
-select * from "earthquakeDB".earthquake.earthquake order by date_time DESC;
-select id, code, date_time, mag, type, title, place from "earthquakeDB".earthquake.earthquake order by date_time DESC;
-select id, code, date_time, mag, type, title, place from "earthquakeDB".earthquake.earthquake where type != 'earthquake';
-select id, code, date_time, mag, type, title, place from "earthquakeDB".earthquake.earthquake where mag notnull order by mag DESC;
-select count(*) from "earthquakeDB".earthquake.earthquake;
-select count(*) from "earthquakeDB".earthquake.earthquake where mag >= 8;
+select * from earthquake.earthquake.earthquake order by date_time;
+select * from earthquake.earthquake.earthquake order by date_time DESC;
+select id, code, date_time, mag, type, title, place from earthquake.earthquake.earthquake order by date_time DESC;
+select id, code, date_time, mag, type, title, place from earthquake.earthquake.earthquake where type != 'earthquake';
+select id, code, date_time, mag, type, title, place from earthquake.earthquake.earthquake where mag notnull order by mag DESC;
+select count(*) from earthquake.earthquake.earthquake;
+select count(*) from earthquake.earthquake.earthquake where mag >= 8;
 
-SELECT date_time FROM "earthquakeDB".earthquake.earthquake
+SELECT date_time FROM earthquake.earthquake.earthquake
                  WHERE date_time !~ '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$' LIMIT 20;
 
 

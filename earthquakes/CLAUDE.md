@@ -34,7 +34,7 @@ Coverage is enforced by JaCoCo: `mvn verify` fails if any class drops below 80% 
 ## Local setup
 
 The `local` profile (`src/main/resources/application-local.yml`) points at
-`r2dbc:postgresql://localhost:5432/earthquakeDB` with user `postgres` / password `scurtis`,
+`r2dbc:postgresql://localhost:5432/earthquake` with user `postgres` / password `scurtis`,
 Elasticsearch at `http://localhost:9200`, and runs the app on port 9777. Postgres runs as a native
 local install (not containerized) in this dev environment. If you don't have a local Postgres
 install, start one with:
@@ -48,7 +48,7 @@ fails startup via `@PostConstruct` if any are blank — set these (e.g. via `SPR
 etc., or the `local` profile) before running.
 
 There are no schema migrations (no Flyway/Liquibase). The schema must be created manually with
-`sql/init.sql` (`psql -h localhost -U postgres -d earthquakeDB -f sql/init.sql`). `sql/README.md`
+`sql/init.sql` (`psql -h localhost -U postgres -d earthquake -f sql/init.sql`). `sql/README.md`
 documents init, plus backup/restore via `sql/backup.sh` / `sql/restore.sh`; `sql/earthquakes.sql`
 holds ad hoc reference queries.
 

@@ -73,15 +73,15 @@ library major-version mismatch after a Spring Boot upgrade) will break the conne
 
 ## Environment
 
-In order to run the Earthquakes application, the following environment variables must be set
-(the application fails at startup if any of the database variables are blank):
+In order to run the Earthquakes application, the following environment variables must be set (the application fails at
+startup if any of the database variables are blank):
 
-| VARIABLE                  | Description                                                                                      |
-|:--------------------------|:-------------------------------------------------------------------------------------------------|
-| SPRING_R2DBC_URL          | The R2DBC URL to the Postgresql database (e.g. `r2dbc:postgresql://localhost:5432/earthquakeDB`) |
-| SPRING_R2DBC_USERNAME     | Username for the Postgresql database                                                             |
-| SPRING_R2DBC_PASSWORD     | Password for the Postgresql database                                                             |
-| SPRING_ELASTICSEARCH_URIS | The URL to Elasticsearch (e.g. `http://localhost:9200`)                                          |
+| VARIABLE                  | Description                                                                                    |
+|:--------------------------|:-----------------------------------------------------------------------------------------------|
+| SPRING_R2DBC_URL          | The R2DBC URL to the Postgresql database (e.g. `r2dbc:postgresql://localhost:5432/earthquake`) |
+| SPRING_R2DBC_USERNAME     | Username for the Postgresql database                                                           |
+| SPRING_R2DBC_PASSWORD     | Password for the Postgresql database                                                           |
+| SPRING_ELASTICSEARCH_URIS | The URL to Elasticsearch (e.g. `http://localhost:9200`)                                        |
 
 For local development, the `local` profile (`src/main/resources/application-local.yml`) already sets
 all of these, so you can run the application with:

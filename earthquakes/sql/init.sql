@@ -2,10 +2,10 @@
 -- Run this against a new Postgres instance to create the schema and tables the app expects.
 --
 -- Usage:
---   psql -h localhost -U postgres -d earthquakeDB -f sql/init.sql
+--   psql -h localhost -U postgres -d earthquake -f sql/init.sql
 --
--- If the earthquakeDB database itself doesn't exist yet, create it first:
---   createdb -h localhost -U postgres earthquakeDB
+-- If the earthquake database itself doesn't exist yet, create it first:
+--   createdb -h localhost -U postgres earthquake
 
 CREATE SCHEMA IF NOT EXISTS earthquake;
 

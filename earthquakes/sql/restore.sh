@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
-# Restores the earthquakeDB database from a dump file produced by backup.sh.
+# Restores the earthquake database from a dump file produced by backup.sh.
 # Drops and recreates the target database before restoring, so this is destructive
 # to whatever currently exists in PGDATABASE.
 #
 # Usage:
-#   ./sql/restore.sh path/to/earthquakeDB_20260729_120000.dump
+#   ./sql/restore.sh path/to/earthquake_20260729_120000.dump
 #
 # Env vars (override as needed, defaults match application-local.yml):
 #   PGHOST     (default: localhost)
 #   PGPORT     (default: 5432)
 #   PGUSER     (default: postgres)
-#   PGDATABASE (default: earthquakeDB)
+#   PGDATABASE (default: earthquake)
 #   PGPASSWORD (default: scurtis)
 #   PG_BIN     (default: /Library/PostgreSQL/16/bin - where these tools live on this machine's
 #               desktop Postgres install, since it isn't on PATH)
@@ -32,7 +32,7 @@ fi
 PGHOST="${PGHOST:-localhost}"
 PGPORT="${PGPORT:-5432}"
 PGUSER="${PGUSER:-postgres}"
-PGDATABASE="${PGDATABASE:-earthquakeDB}"
+PGDATABASE="${PGDATABASE:-earthquake}"
 export PGPASSWORD="${PGPASSWORD:-scurtis}"
 PG_BIN="${PG_BIN:-/Library/PostgreSQL/16/bin}"
 
