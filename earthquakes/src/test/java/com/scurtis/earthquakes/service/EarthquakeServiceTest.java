@@ -222,7 +222,7 @@ class EarthquakeServiceTest {
 
     @Test
     void saveEarthquakeCounts_year_insertsNewUpdatesChangedAndSkipsUnchanged() {
-        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_YEAR, FROM_DATE, TO_DATE))
+        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_YEAR, "2024", "2025"))
             .thenReturn(Flux.just(periodCount("2022", 10), periodCount("2023", 20), periodCount("2024", 30)));
         YearCount changed = new YearCount(2, "2023", 15);
         YearCount unchanged = new YearCount(3, "2024", 30);
@@ -234,7 +234,7 @@ class EarthquakeServiceTest {
         earthquakeService.saveEarthquakeCounts(PERIOD_YEAR, FROM_DATE, TO_DATE);
 
         verify(earthquakeService).saveEarthquakeCounts(PERIOD_YEAR, FROM_DATE, TO_DATE);
-        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_YEAR, FROM_DATE, TO_DATE);
+        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_YEAR, "2024", "2025");
         verify(yearCountRepositoryMock).findByYear("2022");
         verify(yearCountRepositoryMock).findByYear("2023");
         verify(yearCountRepositoryMock).findByYear("2024");
@@ -244,7 +244,7 @@ class EarthquakeServiceTest {
 
     @Test
     void saveEarthquakeCounts_month_insertsNewUpdatesChangedAndSkipsUnchanged() {
-        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_MONTH, FROM_DATE, TO_DATE))
+        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_MONTH, "2024-01", "2024-03"))
             .thenReturn(Flux.just(periodCount("2024-01", 10), periodCount("2024-02", 20), periodCount("2024-03", 30)));
         MonthCount changed = new MonthCount(2, "2024-02", 15);
         MonthCount unchanged = new MonthCount(3, "2024-03", 30);
@@ -256,7 +256,7 @@ class EarthquakeServiceTest {
         earthquakeService.saveEarthquakeCounts("MONTH", FROM_DATE, TO_DATE);
 
         verify(earthquakeService).saveEarthquakeCounts("MONTH", FROM_DATE, TO_DATE);
-        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_MONTH, FROM_DATE, TO_DATE);
+        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_MONTH, "2024-01", "2024-03");
         verify(monthCountRepositoryMock).findByMonth("2024-01");
         verify(monthCountRepositoryMock).findByMonth("2024-02");
         verify(monthCountRepositoryMock).findByMonth("2024-03");
@@ -266,7 +266,7 @@ class EarthquakeServiceTest {
 
     @Test
     void saveEarthquakeCounts_day_insertsNewUpdatesChangedAndSkipsUnchanged() {
-        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, FROM_DATE, TO_DATE))
+        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, "2024-01-15", "2024-02-16"))
             .thenReturn(Flux.just(periodCount("2024-01-15", 10), periodCount("2024-01-16", 20), periodCount("2024-01-17", 30)));
         DayCount changed = new DayCount(2, "2024-01-16", 15);
         DayCount unchanged = new DayCount(3, "2024-01-17", 30);
@@ -278,7 +278,7 @@ class EarthquakeServiceTest {
         earthquakeService.saveEarthquakeCounts(PERIOD_DAY, FROM_DATE, TO_DATE);
 
         verify(earthquakeService).saveEarthquakeCounts(PERIOD_DAY, FROM_DATE, TO_DATE);
-        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, FROM_DATE, TO_DATE);
+        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, "2024-01-15", "2024-02-16");
         verify(dayCountRepositoryMock).findByDay("2024-01-15");
         verify(dayCountRepositoryMock).findByDay("2024-01-16");
         verify(dayCountRepositoryMock).findByDay("2024-01-17");
@@ -288,12 +288,12 @@ class EarthquakeServiceTest {
 
     @Test
     void saveEarthquakeCounts_whenNoCountsFound_savesNothing() {
-        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, FROM_DATE, TO_DATE)).thenReturn(Flux.empty());
+        when(earthquakeRepositoryMock.getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, "2024-01-15", "2024-02-16")).thenReturn(Flux.empty());
 
         earthquakeService.saveEarthquakeCounts(PERIOD_DAY, FROM_DATE, TO_DATE);
 
         verify(earthquakeService).saveEarthquakeCounts(PERIOD_DAY, FROM_DATE, TO_DATE);
-        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, FROM_DATE, TO_DATE);
+        verify(earthquakeRepositoryMock).getEarthquakeCountsByPeriod(PERIOD_LENGTH_DAY, "2024-01-15", "2024-02-16");
     }
 
     // ---------- getEarthquakeCounts ----------

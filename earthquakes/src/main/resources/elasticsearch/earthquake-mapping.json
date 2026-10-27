@@ -1,14 +1,15 @@
 {
   "properties": {
     "id":               { "type": "integer" },
-    "feature_id":       { "type": "keyword" },
-    "coordinate_type":  { "type": "keyword" },
+    "featureId":        { "type": "keyword" },
+    "coordinateType":   { "type": "keyword" },
+    "coordinates":      { "type": "keyword" },
     "code":             { "type": "keyword" },
     "ids":              { "type": "keyword" },
     "title":            { "type": "text" },
     "place":            { "type": "text", "fields": { "raw": { "type": "keyword" } } },
-    "date_time":        { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" },
-    "updated_date":     { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" },
+    "dateTime":         { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" },
+    "updatedDate":      { "type": "date", "format": "yyyy-MM-dd HH:mm:ss" },
     "tz":               { "type": "keyword" },
     "type":             { "type": "keyword" },
     "types":            { "type": "keyword" },
@@ -17,7 +18,7 @@
     "detail":           { "type": "keyword" },
     "url":              { "type": "keyword" },
     "mag":              { "type": "float" },
-    "mag_type":         { "type": "keyword" },
+    "magType":          { "type": "keyword" },
     "status":           { "type": "keyword" },
     "sources":          { "type": "keyword" },
     "net":              { "type": "keyword" },
@@ -28,7 +29,6 @@
     "nst":              { "type": "integer" },
     "gap":              { "type": "float" },
     "dmin":             { "type": "float" },
-    "rms":              { "type": "float" },
-    "created_date":     { "type": "date", "format": "yyyy-MM-dd" }
+    "rms":              { "type": "float" }
   }
 }

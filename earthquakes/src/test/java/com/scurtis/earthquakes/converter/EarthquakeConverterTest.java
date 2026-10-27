@@ -54,7 +54,7 @@ class EarthquakeConverterTest {
         properties.setTitle("M 4.2 - 10km N of Ridgecrest, CA");
         properties.setPlace("10km N of Ridgecrest, CA");
         properties.setTime(epochMillis(LocalDateTime.of(2024, 1, 15, 9, 30, 45)));
-        properties.setUpdated(epochMillis(LocalDateTime.of(2024, 1, 16, 10, 5, 0)));
+        properties.setUpdated(epochMillis(LocalDateTime.of(2024, 1, 16, 22, 5, 0)));
         properties.setTz("-480");
         properties.setType("earthquake");
         properties.setTypes(",origin,phase-data,");
@@ -91,7 +91,7 @@ class EarthquakeConverterTest {
         assertThat(earthquake.getTitle()).isEqualTo("M 4.2 - 10km N of Ridgecrest, CA");
         assertThat(earthquake.getPlace()).isEqualTo("10km N of Ridgecrest, CA");
         assertThat(earthquake.getDateTime()).isEqualTo("2024-01-15 09:30:45");
-        assertThat(earthquake.getUpdatedDate()).isEqualTo("2024-01-16 10:05:00");
+        assertThat(earthquake.getUpdatedDate()).isEqualTo("2024-01-16 22:05:00");
         assertThat(earthquake.getTz()).isEqualTo("-480");
         assertThat(earthquake.getType()).isEqualTo("earthquake");
         assertThat(earthquake.getTypes()).isEqualTo(",origin,phase-data,");

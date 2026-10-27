@@ -194,6 +194,34 @@ class EarthquakeControllerTest {
     }
 
     @Test
+    void saveAllEarthquakeCounts_validatesSavesAndReturnsMessage() {
+        webTestClient.get().uri(uriBuilder -> uriBuilder.path("/earthquake/counts/save/all")
+                .queryParam("fromDate", FROM_DATE)
+                .queryParam("toDate", TO_DATE)
+                .build())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(String.class)
+            .isEqualTo("All counts have been saved from '" + FROM_DATE + "' to '" + TO_DATE + "'");
+
+        verify(validationService).validateDateInputs(FROM_DATE, TO_DATE);
+        verify(earthquakeService).saveAllEarthquakeCounts(FROM_DATE, TO_DATE);
+    }
+
+    @Test
+    void getEarthquakeLastDate_returnsServiceResult() {
+        when(earthquakeService.getEarthquakeLastDate()).thenReturn(Mono.just("2026-10-26"));
+
+        webTestClient.get().uri("/earthquake/last/date")
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(String.class)
+            .isEqualTo("2026-10-26");
+
+        verify(earthquakeService).getEarthquakeLastDate();
+    }
+
+    @Test
     void getEarthquakeCounts_validatesAndReturnsServiceResult() {
         List<EarthquakeCountDto> counts = List.of(
             new EarthquakeCountDto(PERIOD_YEAR, "2023", 10),

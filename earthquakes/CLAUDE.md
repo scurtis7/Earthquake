@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 A Spring Boot (WebFlux) service that fetches earthquake data from the USGS FDSN event API
-(`https://earthquake.usgs.gov/fdsnws/event/1/`), persists both the raw per-event data and
-aggregated year/month/day counts to Postgres via R2DBC so historical analytics can be run without
+(`https://earthquake.usgs.gov/fdsnws/event/1/`), persists the raw per-event data to Postgres via
+R2DBC, aggregates it into year/month/day counts so historical analytics can be run without
 re-hitting USGS, and can copy the raw events into Elasticsearch for searching in Kibana.
 
 ## Stack
@@ -82,11 +82,13 @@ Request flow: `EarthquakeController` → `ValidationService` (input checks) → 
   `YearCount`, `MonthCount`, `DayCount` (`id`, period key string, `count`) and `Earthquake` (one
   row per USGS event, unique on `featureId`). All implement `Persistable<Integer>` with `isNew()`
   based on `id == null || id == 0`, because R2DBC can't tell insert from update on a manually
-  constructed entity otherwise.
+  constructed entity otherwise. `PeriodCount` (`period`, `count`) is not a table; it's the row shape
+  returned by the `EarthquakeRepository.getEarthquakeCountsByPeriod` aggregate query.
 - **`dto/EarthquakeCountDto`** — `(period, date, count)` response shape for the counts endpoint.
 - **`converter/EarthquakeConverter`** — count entities → `EarthquakeCountDto`, and `Feature` →
-  `Earthquake` (epoch millis become UTC `DATE_TIME_FORMATTER` strings; coordinates are joined
-  into a comma-separated string).
+  `Earthquake` (epoch millis become UTC `DATE_TIME_FORMATTER` strings, `uuuu-MM-dd HH:mm:ss`;
+  coordinates are joined into a comma-separated string). Because `date_time` is stored as a
+  sortable string, period counts and range queries work with plain string comparison and `LEFT()`.
 - **`service/ValidationService`** — validates `period` (`year`/`month`/`day`) and `uuuu-MM-dd`
   dates (`toDate` must be after `fromDate`), throwing `ValidationException`.
 - **`service/EarthquakeService`** — uses two USGS clients from `AppConfig`, both with base URL
@@ -94,22 +96,34 @@ Request flow: `EarthquakeController` → `ValidationService` (input checks) → 
     - `getUSGSRawData` — a single reactive `WebClient` call to `/query`, returned straight through
       (no persistence).
     - `saveUSGSRawData` — a **blocking** `RestClient` call to `/query` for the range; each feature
-      is then upserted into `earthquake` by `featureId` with fire-and-forget `.subscribe()`.
-      `saveUSGSRawDataFromStartDate` loops this month by month from `startDate` to today.
-    - `saveEarthquakeCounts` — loops over each year/month/day in the range calling USGS `/count`.
-      Year and month use `WebClient` with fire-and-forget `.subscribe()`; day uses the blocking
-      `RestClient` and sleeps 1 second between calls because USGS rate-limits (~500 requests per
-      5 minutes). All upsert by period key, only saving when the count changed.
+      is then upserted into `earthquake` by `featureId` with fire-and-forget `.subscribe()`. An
+      update rebuilds the whole row from USGS and keeps only the existing `id`, so re-saving a range
+      refreshes every column. `saveUSGSRawDataFromStartDate` loops this month by month from
+      `startDate` to today.
+    - `saveEarthquakeCounts` — does **not** call USGS. It aggregates the `earthquake` table with
+      `getEarthquakeCountsByPeriod` (`LEFT(date_time, 4|7|10)`, `type = 'earthquake'` only, so
+      quarry blasts etc. are excluded), then upserts each period into the matching count table,
+      only saving when the count changed. The input dates become period keys with an exclusive
+      upper bound one period past `toDate` (e.g. year: `2024-01-15`..`2024-02-15` → `"2024"`..
+      `"2025"`). Run the raw save first, or the counts will be stale. `saveAllEarthquakeCounts`
+      does year, month, and day in one call.
     - `getEarthquakeCounts` — reads the matching count table between the two period keys, ordered.
+    - `getEarthquakeLastDate` — `LEFT(MAX(date_time), 10)` from `earthquake`, used by the UI to know
+      where to resume loading.
 
   The save paths deliberately mix blocking I/O and unawaited subscriptions into an otherwise
-  reactive codebase: they run on the request thread, can make thousands of sequential HTTP calls,
-  and the endpoint can return before every DB write has finished.
+  reactive codebase: they run on the request thread, the raw save can make many sequential USGS
+  calls, and the endpoint can return before every DB write has finished.
 - **`service/ElasticsearchIndexService`** — deletes and recreates the `earthquake_index` index from
   `src/main/resources/elasticsearch/earthquake-mapping.json`, then bulk-loads every `Earthquake`
-  row from Postgres in batches of 1000.
+  row from Postgres in batches of 1000. Spring Data writes documents using the entity's **camelCase
+  Java field names** (`dateTime`, `featureId`, …), so the mapping's property names must match them
+  exactly. A snake_case name silently creates an empty field, and the real field gets dynamically
+  mapped as `text` (breaking date range queries). The mapping is only applied on recreate, so a
+  mapping change needs `PUT /earthquake/es-index`.
 - **`repository/`** — `ReactiveCrudRepository`s with derived queries (`findByX`,
-  `findByXBetweenOrderByX`, `findByFeatureId`).
+  `findByXBetweenOrderByX`, `findByFeatureId`), plus native `@Query` aggregates on
+  `EarthquakeRepository` (`getEarthquakeCountsByPeriod`, `getEarthquakeLastDate`).
 - **`exception/GlobalExceptionHandler`** — maps `ValidationException` → 400 and
   `ElasticsearchIndexException` → 500, both as an `ErrorResponse` JSON body.
 - **`config/AppConfig`** — `WebClient` (10MB in-memory buffer) and `RestClient` beans, plus logs
@@ -128,7 +142,9 @@ All dates are `uuuu-MM-dd`; `period` is `year`, `month`, or `day`.
 | GET    | `/earthquake/raw`           | `fromDate`, `toDate`           | Calls USGS `/query` and returns the raw `FeatureCollection` (no DB write)                      |
 | GET    | `/earthquake/raw/save`      | `fromDate`, `toDate`           | Calls USGS `/query` for the range and upserts each event into `earthquake`                     |
 | GET    | `/earthquake/raw/save/from` | `startDate`                    | Same as above, month by month from `startDate` through today                                   |
-| GET    | `/earthquake/counts/save`   | `period`, `fromDate`, `toDate` | Calls USGS `/count` per year/month/day in the range and upserts into the matching count table  |
+| GET    | `/earthquake/counts/save`   | `period`, `fromDate`, `toDate` | Aggregates `earthquake` rows per year/month/day in the range and upserts the count table       |
+| GET    | `/earthquake/counts/save/all` | `fromDate`, `toDate`         | Same as above for year, month, and day in one call                                             |
 | GET    | `/earthquake/counts`        | `period`, `fromDate`, `toDate` | Returns saved counts for the range as `EarthquakeCountDto`s, ordered by period                 |
+| GET    | `/earthquake/last/date`     | —                              | Returns the latest `uuuu-MM-dd` date in the `earthquake` table                                 |
 | PUT    | `/earthquake/es-index`      | —                              | Recreates `earthquake_index` in Elasticsearch and reloads every `earthquake` row (~30 minutes) |
 | GET    | `/actuator/health`          | —                              | Health check                                                                                   |
