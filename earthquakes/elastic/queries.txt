@@ -1,0 +1,49 @@
+
+###################################
+# Earthquake Search Queries
+###################################
+
+GET /earthquake_index/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 5000, 
+  "sort": [],
+  "track_scores": true
+}
+
+ GET earthquake_index/_search
+  {
+    "size": 1000,
+    "track_total_hits": true,
+    "query": {
+      "range": {
+        "dateTime": {
+          "gte": "2026-10-26 04:00:00",
+          "lt": "2026-10-26 05:00:00",
+          "format": "yyyy-MM-dd HH:mm:ss"
+        }
+      }
+    },
+    "sort": [{ "dateTime": "asc" }]
+  }
+
+
+
+##### Earthquake Info ####################
+GET /earthquake_index/_mapping
+GET /earthquake_index/_settings
+GET /earthquake_index/_count
+
+# Node and catalogue information ######
+#######################################
+GET /_nodes
+GET /_nodes/stats
+GET /_nodes/usage
+GET /_cat/indices/?v
+GET /_cat/health
+GET /_cluster/health
+GET /_cluster/settings
+GET /_license
+#######################################
