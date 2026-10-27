@@ -5,10 +5,10 @@ Elasticsearch mapping fix, and the test fixes. Check items off as they're done.
 
 ## 1. Ship the code fixes
 
-- [ ] Commit the working-tree changes (`AppConstants` `HH` fix, `earthquake-mapping.json` camelCase
+- [x] Commit the working-tree changes (`AppConstants` `HH` fix, `earthquake-mapping.json` camelCase
       fields, `EarthquakeServiceTest` / `EarthquakeControllerTest` / `EarthquakeConverterTest`,
       `CLAUDE.md`). `mvn clean verify` passes as of 2026-10-27.
-- [ ] Restart the app (`mvn spring-boot:run -Dspring-boot.run.profiles=local`) so it runs the new
+- [x] Restart the app (`mvn spring-boot:run -Dspring-boot.run.profiles=local`) so it runs the new
       formatter and mapping.
 
 ## 2. Repair the stored times in Postgres
@@ -18,14 +18,14 @@ event reads `03:30:00`. Dates are correct; only the hours of PM events are wrong
 information is lost, so the only fix is to re-fetch from USGS. Re-saving overwrites the whole row
 (matched by `featureId`), so there's no need to delete anything first.
 
-- [ ] Re-save raw data from the earliest stored event (`1900-01-05`, ~4.88M rows):
+- [x] Re-save raw data from the earliest stored event (`1900-01-05`, ~4.88M rows):
       `GET /earthquake/raw/save/from?startDate=1900-01-01`
       - This makes one USGS call per month (~1,520 calls) on the request thread, so expect it to
         take a long time. It can be run in smaller pieces with
         `/earthquake/raw/save?fromDate=…&toDate=…` instead.
       - Spot-check afterwards: `SELECT count(*) FROM earthquake.earthquake WHERE date_time >= '2026-10-26' AND date_time < '2026-10-27' AND substring(date_time, 12, 2)::int >= 13;`
         should be non-zero.
-- [ ] Optional: re-run `GET /earthquake/counts/save/all?fromDate=1900-01-01&toDate=<today>`. The
+- [x] Optional: re-run `GET /earthquake/counts/save/all?fromDate=1900-01-01&toDate=<today>`. The
       counts only use the date part, so the time bug didn't affect them. This is only needed if
       raw data was added since the counts were last saved.
 
@@ -33,12 +33,12 @@ information is lost, so the only fix is to re-fetch from USGS. Re-saving overwri
 
 Do this **after** step 2, or the index will carry the old wrong times.
 
-- [ ] Rebuild the index (~30 minutes): `curl -X PUT localhost:9777/earthquake/es-index`
-- [ ] Confirm the mapping took: `curl localhost:9200/earthquake_index/_mapping` should show
+- [x] Rebuild the index (~30 minutes): `curl -X PUT localhost:9777/earthquake/es-index`
+- [x] Confirm the mapping took: `curl localhost:9200/earthquake_index/_mapping` should show
       `dateTime` as `date` and no snake_case fields such as `date_time`.
-- [ ] In Kibana, delete and recreate the `earthquake_index` data view with `dateTime` as the time
+- [x] In Kibana, delete and recreate the `earthquake_index` data view with `dateTime` as the time
       field.
-- [ ] Verify the 2026-10-26 query in Dev Tools returns ~210 hits:
+- [x] Verify the 2026-10-26 query in Dev Tools returns ~210 hits:
 
       GET earthquake_index/_search
       {
