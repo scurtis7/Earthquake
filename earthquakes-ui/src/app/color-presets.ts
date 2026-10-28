@@ -50,5 +50,25 @@ export const ColorPresets = definePreset(Aura, {
         }
       }
     }
+  },
+  components: {
+    message: {
+      colorScheme: {
+        // Aura's default dark messages use a faint tint that washes out on the sky surfaces,
+        // so use a deeper background and lighter text for readable contrast
+        dark: {
+          success: {
+            background: 'color-mix(in srgb, {green.950}, transparent 20%)',
+            borderColor: '{green.600}',
+            color: '{green.200}'
+          },
+          error: {
+            background: 'color-mix(in srgb, {red.950}, transparent 20%)',
+            borderColor: '{red.600}',
+            color: '{red.200}'
+          }
+        }
+      }
+    }
   }
 });
