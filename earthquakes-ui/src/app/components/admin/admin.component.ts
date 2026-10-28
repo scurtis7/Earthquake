@@ -28,6 +28,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   readonly maxDate = new Date();
 
   lastDate: string;
+  lastDateError = "";
   startDate: Date = this.getYesterday();
   endDate: Date = this.maxDate;
 
@@ -50,9 +51,15 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   private getLastDate() {
+    this.lastDateError = "";
     this.restService.getLastDate()
-      .subscribe(response => {
-        this.lastDate = response;
+      .subscribe({
+        next: response => {
+          this.lastDate = response;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.lastDateError = `Failed to get the last date: ${this.getErrorMessage(error)}`;
+        }
       });
   }
 
@@ -74,7 +81,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     const fromDate = this.formatDate(this.startDate);
     const toDate = this.formatDate(this.endDate);
     this.runUpdate(this.restService.updateEarthquakes(fromDate, toDate), 'load earthquake data',
-      `Loading earthquake data for ${fromDate} to ${toDate}…`);
+      `Loading earthquake data for ${fromDate} to ${toDate}…`, () => this.getLastDate());
   }
 
   updateCounts() {
@@ -84,7 +91,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       `Updating earthquake counts for ${fromDate} to ${toDate}…`);
   }
 
-  private runUpdate(request: Observable<string>, action: string, progressMessage: string) {
+  private runUpdate(request: Observable<string>, action: string, progressMessage: string, onSuccess?: () => void) {
     this.loading = true;
     this.loadResponse = "";
     this.loadError = "";
@@ -98,6 +105,7 @@ export class AdminComponent implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.loadResponse = response;
+          onSuccess?.();
         },
         error: (error: HttpErrorResponse) => {
           this.loadError = `Failed to ${action}: ${this.getErrorMessage(error)}`;

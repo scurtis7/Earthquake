@@ -1,6 +1,9 @@
 <div class="card admin-layout">
   <h2>Load Raw Earthquake Data</h2>
   <h3>Last Date: {{ lastDate }}</h3>
+  @if (lastDateError) {
+    <p-message severity="error" icon="pi pi-times-circle" [text]="lastDateError"/>
+  }
   <div class="filters-row">
     <div class="filter-field">
       <label for="startDate">Start Date (inclusive)</label>
