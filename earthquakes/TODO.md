@@ -71,3 +71,18 @@ while Postgres already had October.
       "changed since" column. `updated_date` is USGS's update time, not ours, so it would need a
       new column such as a `last_modified` timestamp set on save.
 - [ ] Add tests for the new indexing path (the JaCoCo 80% per-class line coverage still applies).
+
+## 5. Let Claude check the UI in Firefox
+
+Claude can't look at the running UI yet: the Claude in Chrome extension only works in Chrome, and
+development here happens in Firefox. Set up one of these so UI changes (e.g. the sticky footer and
+dark-mode message colors from 2026-10-28) can be checked visually:
+
+- [ ] Preferred: add the Playwright MCP server with Firefox to the UI project, e.g.
+      `claude mcp add playwright -- npx @playwright/mcp@latest --browser firefox`. Gives Claude
+      clicks, typing and screenshots, close to what the Chrome extension does.
+- [ ] Quick alternative: headless Firefox screenshots, e.g.
+      `firefox --headless --screenshot out.png http://localhost:4200/admin`. Layout checks only,
+      no clicking or dark-mode toggle.
+- [ ] Once set up, verify the sticky footer spacing on Home and Admin, and the dark-mode message
+      colors.
