@@ -2,6 +2,10 @@
 
 @import "primeicons/primeicons.css";
 
+body {
+  margin: 0;
+}
+
 /* Update global body and all PrimeNG components */
 body, .p-component {
   font-family: Helvetica, sans-serif;

@@ -5,6 +5,11 @@
   background-color: var(--p-content-background);
 }
 
+.description {
+  margin-top: 0;
+  color: var(--p-text-muted-color);
+}
+
 .filters-row {
   display: flex;
   flex-direction: row;

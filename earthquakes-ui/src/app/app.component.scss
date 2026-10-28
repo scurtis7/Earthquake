@@ -1,8 +1,21 @@
-
+// Full-height column so the footer sits at the bottom of the window on short pages
+// and follows the content on long ones. Padding replaces the default 8px body margin
+// plus the old 10px layout margin.
 .main-layout {
-  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 18px;
 }
 
+.main-background {
+  flex: 1;
+}
+
+// New block formatting context keeps each page's 20px card margins inside the content
+// area, so the gap above the footer matches the gap below the header on every page
 .main-content {
-  min-height: 500px;
+  display: flow-root;
 }

@@ -1,5 +1,6 @@
 <div class="card admin-layout">
   <h2>Load Raw Earthquake Data by Period</h2>
+  <p class="description">This method calls the USGS earthquake API to get the raw earthquake data for every day in the range specified and save them to the database.</p>
   <h3>Last Date: {{ lastDate }}</h3>
   @if (lastDateError) {
     <p-message severity="error" icon="pi pi-times-circle" [text]="lastDateError"/>
@@ -46,6 +47,7 @@
 </div>
 <div class="card admin-layout">
   <h2>Load Raw Earthquake Data From Date</h2>
+  <p class="description">This method calls the USGS earthquake API to get the raw earthquake data for everyday starting with the start date until the current date and save them to the database.</p>
   <div class="filters-row">
     <div class="filter-field">
       <label for="fromDate">From Date</label>
