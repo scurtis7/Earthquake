@@ -26,6 +26,11 @@ export class RestService {
     return this.http.get(url, { responseType: 'text' });
   }
 
+  public updateEarthquakesFromDate(startDate: string): Observable<string> {
+    const url = this.getBaseUrl() + '/raw/save/from?startDate=' + startDate;
+    return this.http.get(url, { responseType: 'text' });
+  }
+
   public updateEarthquakeCounts(fromDate: string, toDate: string): Observable<string> {
     const url = this.getBaseUrl() + '/counts/save/all?fromDate=' + fromDate + '&toDate=' + toDate;
     return this.http.get(url, { responseType: 'text' });

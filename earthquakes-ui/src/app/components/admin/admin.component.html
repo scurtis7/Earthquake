@@ -1,5 +1,5 @@
 <div class="card admin-layout">
-  <h2>Load Raw Earthquake Data</h2>
+  <h2>Load Raw Earthquake Data by Period</h2>
   <h3>Last Date: {{ lastDate }}</h3>
   @if (lastDateError) {
     <p-message severity="error" icon="pi pi-times-circle" [text]="lastDateError"/>
@@ -40,6 +40,37 @@
       [disabled]="loading"
       (onClick)="updateCounts()"/>
   </div>
+  @if (activeSection === 'period') {
+    <ng-container *ngTemplateOutlet="requestStatus"/>
+  }
+</div>
+<div class="card admin-layout">
+  <h2>Load Raw Earthquake Data From Date</h2>
+  <div class="filters-row">
+    <div class="filter-field">
+      <label for="fromDate">From Date</label>
+      <p-datepicker
+        inputId="fromDate"
+        [(ngModel)]="fromDate"
+        [minDate]="minDate"
+        [maxDate]="maxDate"
+        dateFormat="yy-mm-dd"
+        showIcon></p-datepicker>
+    </div>
+    <p-button
+      id="loadFromButton"
+      label="Load Data"
+      icon="pi pi-download"
+      [loading]="loading"
+      [disabled]="loading"
+      (onClick)="loadDataFromDate()"/>
+  </div>
+  @if (activeSection === 'from') {
+    <ng-container *ngTemplateOutlet="requestStatus"/>
+  }
+</div>
+
+<ng-template #requestStatus>
   @if (loading) {
     <div class="progress">
       <p-progressbar mode="indeterminate" [style]="{ height: '0.5rem' }"/>
@@ -52,4 +83,4 @@
   @if (loadResponse) {
     <p-message severity="success" icon="pi pi-check-circle" [text]="loadResponse"/>
   }
-</div>
+</ng-template>

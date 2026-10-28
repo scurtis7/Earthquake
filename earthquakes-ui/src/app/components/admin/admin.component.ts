@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NgTemplateOutlet } from "@angular/common";
 import { DatePicker } from "primeng/datepicker";
 import { FormsModule } from "@angular/forms";
 import { Button } from "primeng/button";
@@ -17,7 +18,8 @@ import { ErrorResponse } from "../../model/error-response";
     FormsModule,
     Button,
     Message,
-    ProgressBar
+    ProgressBar,
+    NgTemplateOutlet
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
@@ -31,10 +33,12 @@ export class AdminComponent implements OnInit, OnDestroy {
   lastDateError = "";
   startDate: Date = this.getYesterday();
   endDate: Date = this.maxDate;
+  fromDate: Date = this.getYesterday();
 
   loadResponse = "";
   loadError = "";
   loading = false;
+  activeSection: 'period' | 'from' | null = null;
   progressMessage = "";
   elapsedSeconds = 0;
   private elapsedTimer: ReturnType<typeof setInterval> | undefined;
@@ -80,18 +84,26 @@ export class AdminComponent implements OnInit, OnDestroy {
   loadData(): void {
     const fromDate = this.formatDate(this.startDate);
     const toDate = this.formatDate(this.endDate);
-    this.runUpdate(this.restService.updateEarthquakes(fromDate, toDate), 'load earthquake data',
+    this.runUpdate('period', this.restService.updateEarthquakes(fromDate, toDate), 'load earthquake data',
       `Loading earthquake data for ${fromDate} to ${toDate}…`, () => this.getLastDate());
   }
 
   updateCounts() {
     const fromDate = this.formatDate(this.startDate);
     const toDate = this.formatDate(this.endDate);
-    this.runUpdate(this.restService.updateEarthquakeCounts(fromDate, toDate), 'update earthquake counts',
+    this.runUpdate('period', this.restService.updateEarthquakeCounts(fromDate, toDate), 'update earthquake counts',
       `Updating earthquake counts for ${fromDate} to ${toDate}…`);
   }
 
-  private runUpdate(request: Observable<string>, action: string, progressMessage: string, onSuccess?: () => void) {
+  loadDataFromDate(): void {
+    const startDate = this.formatDate(this.fromDate);
+    this.runUpdate('from', this.restService.updateEarthquakesFromDate(startDate), 'load earthquake data',
+      `Loading earthquake data from ${startDate}…`, () => this.getLastDate());
+  }
+
+  private runUpdate(section: 'period' | 'from', request: Observable<string>, action: string, progressMessage: string,
+                    onSuccess?: () => void) {
+    this.activeSection = section;
     this.loading = true;
     this.loadResponse = "";
     this.loadError = "";
