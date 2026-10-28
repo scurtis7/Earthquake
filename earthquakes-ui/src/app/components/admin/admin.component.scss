@@ -23,3 +23,10 @@
     font-weight: 600;
   }
 }
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 40rem;
+}

@@ -26,12 +26,27 @@
       id="loadButton"
       label="Load Data"
       icon="pi pi-download"
+      [loading]="loading"
+      [disabled]="loading"
       (onClick)="loadData()"/>
     <p-button
       id="updateCounts"
       label="Update Counts"
       icon="pi pi-refresh"
+      [loading]="loading"
+      [disabled]="loading"
       (onClick)="updateCounts()"/>
   </div>
-  <div>{{ loadResponse }}</div>
+  @if (loading) {
+    <div class="progress">
+      <p-progressbar mode="indeterminate" [style]="{ height: '0.5rem' }"/>
+      <span>{{ progressMessage }} ({{ elapsedTime }})</span>
+    </div>
+  }
+  @if (loadError) {
+    <p-message severity="error" icon="pi pi-times-circle" [text]="loadError"/>
+  }
+  @if (loadResponse) {
+    <p-message severity="success" icon="pi pi-check-circle" [text]="loadResponse"/>
+  }
 </div>

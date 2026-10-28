@@ -1,8 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { DatePicker } from "primeng/datepicker";
 import { FormsModule } from "@angular/forms";
 import { Button } from "primeng/button";
+import { Message } from "primeng/message";
+import { ProgressBar } from "primeng/progressbar";
+import { HttpErrorResponse } from "@angular/common/http";
+import { finalize, Observable } from "rxjs";
 import { RestService } from "../../service/rest.service";
+import { ErrorResponse } from "../../model/error-response";
 
 @Component({
   selector: 'app-admin',
@@ -10,12 +15,14 @@ import { RestService } from "../../service/rest.service";
   imports: [
     DatePicker,
     FormsModule,
-    Button
+    Button,
+    Message,
+    ProgressBar
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, OnDestroy {
 
   readonly minDate = new Date(1900, 0, 1);
   readonly maxDate = new Date();
@@ -25,12 +32,21 @@ export class AdminComponent implements OnInit {
   endDate: Date = this.maxDate;
 
   loadResponse = "";
+  loadError = "";
+  loading = false;
+  progressMessage = "";
+  elapsedSeconds = 0;
+  private elapsedTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(private restService: RestService) {
   }
 
   ngOnInit(): void {
     this.getLastDate();
+  }
+
+  ngOnDestroy(): void {
+    this.stopElapsedTimer();
   }
 
   private getLastDate() {
@@ -57,19 +73,76 @@ export class AdminComponent implements OnInit {
   loadData(): void {
     const fromDate = this.formatDate(this.startDate);
     const toDate = this.formatDate(this.endDate);
-    this.restService.updateEarthquakes(fromDate, toDate)
-      .subscribe(response => {
-        this.loadResponse = response;
-      });
+    this.runUpdate(this.restService.updateEarthquakes(fromDate, toDate), 'load earthquake data',
+      `Loading earthquake data for ${fromDate} to ${toDate}…`);
   }
 
   updateCounts() {
     const fromDate = this.formatDate(this.startDate);
     const toDate = this.formatDate(this.endDate);
-    this.restService.updateEarthquakeCounts(fromDate, toDate)
-      .subscribe(response => {
-        this.loadResponse = response;
+    this.runUpdate(this.restService.updateEarthquakeCounts(fromDate, toDate), 'update earthquake counts',
+      `Updating earthquake counts for ${fromDate} to ${toDate}…`);
+  }
+
+  private runUpdate(request: Observable<string>, action: string, progressMessage: string) {
+    this.loading = true;
+    this.loadResponse = "";
+    this.loadError = "";
+    this.progressMessage = progressMessage;
+    this.startElapsedTimer();
+    request
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.stopElapsedTimer();
+      }))
+      .subscribe({
+        next: response => {
+          this.loadResponse = response;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.loadError = `Failed to ${action}: ${this.getErrorMessage(error)}`;
+        }
       });
+  }
+
+  get elapsedTime(): string {
+    const minutes = Math.floor(this.elapsedSeconds / 60);
+    const seconds = String(this.elapsedSeconds % 60).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+
+  private startElapsedTimer() {
+    this.stopElapsedTimer();
+    this.elapsedSeconds = 0;
+    this.elapsedTimer = setInterval(() => this.elapsedSeconds++, 1000);
+  }
+
+  private stopElapsedTimer() {
+    clearInterval(this.elapsedTimer);
+    this.elapsedTimer = undefined;
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return 'Unable to reach the earthquake server. Check that it is running.';
+    }
+    // Requests use responseType 'text', so the server's ErrorResponse JSON arrives as a string
+    const body = this.parseErrorResponse(error.error);
+    if (body?.message) {
+      return `${body.message} (${error.status} ${body.status ?? error.statusText})`;
+    }
+    return `The server returned ${error.status} ${error.statusText}.`;
+  }
+
+  private parseErrorResponse(body: unknown): Partial<ErrorResponse> | null {
+    if (typeof body !== 'string') {
+      return body && typeof body === 'object' ? body as Partial<ErrorResponse> : null;
+    }
+    try {
+      return JSON.parse(body);
+    } catch {
+      return body.trim() ? { message: body.trim() } : null;
+    }
   }
 
   private formatDate(date: Date): string {
