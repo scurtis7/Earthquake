@@ -6,17 +6,21 @@ import { Select } from "primeng/select";
 import { DatePicker } from "primeng/datepicker";
 import { FormsModule } from "@angular/forms";
 import { isPlatformBrowser } from "@angular/common";
+import { HttpErrorResponse } from "@angular/common/http";
+import { Message } from "primeng/message";
+import { getErrorMessage } from "../../service/error-message";
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ChartModule, Select, DatePicker, FormsModule],
+  imports: [ChartModule, Select, DatePicker, FormsModule, Message],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {
 
   counts: Count[];
+  countsError = "";
   data: any;
   options: any;
   platformId = inject(PLATFORM_ID);
@@ -66,11 +70,20 @@ export class HomeComponent implements OnInit {
   }
 
   private getCounts(period: string, fromDate: string, toDate: string): void {
+    this.countsError = "";
     this.restService.getCounts(period, fromDate, toDate)
-      .subscribe(counts => {
-        this.counts = counts;
-        console.log(`Number of counts: ${counts.length}`);
-        this.initChart();
+      .subscribe({
+        next: counts => {
+          this.counts = counts;
+          console.log(`Number of counts: ${counts.length}`);
+          this.initChart();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.countsError = `Failed to get earthquake counts: ${getErrorMessage(error)}`;
+          // Clear the chart so it doesn't show data for the previous filters
+          this.counts = [];
+          this.initChart();
+        }
       });
   }
 

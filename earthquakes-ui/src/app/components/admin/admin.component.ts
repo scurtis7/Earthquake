@@ -8,7 +8,7 @@ import { ProgressBar } from "primeng/progressbar";
 import { HttpErrorResponse } from "@angular/common/http";
 import { finalize, Observable } from "rxjs";
 import { RestService } from "../../service/rest.service";
-import { ErrorResponse } from "../../model/error-response";
+import { getErrorMessage } from "../../service/error-message";
 
 @Component({
   selector: 'app-admin',
@@ -62,7 +62,7 @@ export class AdminComponent implements OnInit, OnDestroy {
           this.lastDate = response;
         },
         error: (error: HttpErrorResponse) => {
-          this.lastDateError = `Failed to get the last date: ${this.getErrorMessage(error)}`;
+          this.lastDateError = `Failed to get the last date: ${getErrorMessage(error)}`;
         }
       });
   }
@@ -120,7 +120,7 @@ export class AdminComponent implements OnInit, OnDestroy {
           onSuccess?.();
         },
         error: (error: HttpErrorResponse) => {
-          this.loadError = `Failed to ${action}: ${this.getErrorMessage(error)}`;
+          this.loadError = `Failed to ${action}: ${getErrorMessage(error)}`;
         }
       });
   }
@@ -140,29 +140,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   private stopElapsedTimer() {
     clearInterval(this.elapsedTimer);
     this.elapsedTimer = undefined;
-  }
-
-  private getErrorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return 'Unable to reach the earthquake server. Check that it is running.';
-    }
-    // Requests use responseType 'text', so the server's ErrorResponse JSON arrives as a string
-    const body = this.parseErrorResponse(error.error);
-    if (body?.message) {
-      return `${body.message} (${error.status} ${body.status ?? error.statusText})`;
-    }
-    return `The server returned ${error.status} ${error.statusText}.`;
-  }
-
-  private parseErrorResponse(body: unknown): Partial<ErrorResponse> | null {
-    if (typeof body !== 'string') {
-      return body && typeof body === 'object' ? body as Partial<ErrorResponse> : null;
-    }
-    try {
-      return JSON.parse(body);
-    } catch {
-      return body.trim() ? { message: body.trim() } : null;
-    }
   }
 
   private formatDate(date: Date): string {
