@@ -86,3 +86,14 @@ dark-mode message colors from 2026-10-28) can be checked visually:
       no clicking or dark-mode toggle.
 - [ ] Once set up, verify the sticky footer spacing on Home and Admin, and the dark-mode message
       colors.
+
+## 6. Search the Elasticsearch index
+
+Add the ability to search `earthquake_index` from the service, instead of only through Kibana.
+Details (query parameters, filters, paging, response shape) are still to be worked out.
+
+- [ ] Add a service method that runs a search against `earthquake_index`.
+- [ ] Add a REST endpoint on `EarthquakeController` that calls it, with input checks in
+      `ValidationService`.
+- [ ] Add tests for both (the JaCoCo 80% per-class line coverage still applies) and document the
+      endpoint in `CLAUDE.md`.
