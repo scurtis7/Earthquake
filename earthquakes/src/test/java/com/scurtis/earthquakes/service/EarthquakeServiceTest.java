@@ -7,6 +7,7 @@ import com.scurtis.earthquakes.entity.Earthquake;
 import com.scurtis.earthquakes.entity.MonthCount;
 import com.scurtis.earthquakes.entity.PeriodCount;
 import com.scurtis.earthquakes.entity.YearCount;
+import com.scurtis.earthquakes.exception.ElasticsearchIndexException;
 import com.scurtis.earthquakes.exception.ValidationException;
 import com.scurtis.earthquakes.model.Feature;
 import com.scurtis.earthquakes.model.FeatureCollection;
@@ -86,6 +87,8 @@ class EarthquakeServiceTest {
     @Mock
     private EarthquakeConverter earthquakeConverterMock;
     @Mock
+    private ElasticsearchIndexService elasticsearchIndexServiceMock;
+    @Mock
     private WebClient.RequestHeadersUriSpec webClientUriSpecMock;
     @Mock
     private WebClient.RequestHeadersSpec webClientHeadersSpecMock;
@@ -101,7 +104,7 @@ class EarthquakeServiceTest {
     @BeforeEach
     void setUp() {
         earthquakeService = spy(new EarthquakeService(webClientMock, restClientMock, yearCountRepositoryMock,
-            monthCountRepositoryMock, dayCountRepositoryMock, earthquakeRepositoryMock, earthquakeConverterMock));
+            monthCountRepositoryMock, dayCountRepositoryMock, earthquakeRepositoryMock, earthquakeConverterMock, elasticsearchIndexServiceMock));
     }
 
     @AfterEach
@@ -113,6 +116,7 @@ class EarthquakeServiceTest {
         Mockito.verifyNoMoreInteractions(dayCountRepositoryMock);
         Mockito.verifyNoMoreInteractions(earthquakeRepositoryMock);
         Mockito.verifyNoMoreInteractions(earthquakeConverterMock);
+        Mockito.verifyNoMoreInteractions(elasticsearchIndexServiceMock);
         Mockito.verifyNoMoreInteractions(earthquakeService);
     }
 
@@ -155,6 +159,7 @@ class EarthquakeServiceTest {
         when(earthquakeRepositoryMock.findByFeatureId(FEATURE_ID_NEW)).thenReturn(Mono.empty());
         when(earthquakeRepositoryMock.findByFeatureId(FEATURE_ID_EXISTING)).thenReturn(Mono.just(earthquake(42, FEATURE_ID_EXISTING)));
         when(earthquakeRepositoryMock.save(any(Earthquake.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(elasticsearchIndexServiceMock.indexEarthquakes(List.of(newEntity, existingEntity))).thenReturn(Mono.just(2L));
 
         String result = earthquakeService.saveUSGSRawData(FROM_DATE, TO_DATE);
 
@@ -170,6 +175,59 @@ class EarthquakeServiceTest {
         verify(earthquakeRepositoryMock).findByFeatureId(FEATURE_ID_EXISTING);
         verify(earthquakeRepositoryMock).save(newEntity);
         verify(earthquakeRepositoryMock).save(existingEntity);
+        verify(elasticsearchIndexServiceMock).indexEarthquakes(List.of(newEntity, existingEntity));
+    }
+
+    @Test
+    void saveUSGSRawData_whenOneDatabaseSaveFails_indexesTheOthers() {
+        Feature newFeature = getNewFeature();
+        Feature existingFeature = getExistingFeature();
+        stubRestClientQuery(featureCollection(OK.value(), List.of(newFeature, existingFeature)));
+
+        Earthquake newEntity = getNewEarthquake();
+        Earthquake existingEntity = getExistingEarthquake();
+        when(earthquakeConverterMock.toEntity(newFeature)).thenReturn(newEntity);
+        when(earthquakeConverterMock.toEntity(existingFeature)).thenReturn(existingEntity);
+        when(earthquakeRepositoryMock.findByFeatureId(FEATURE_ID_NEW)).thenReturn(Mono.empty());
+        when(earthquakeRepositoryMock.findByFeatureId(FEATURE_ID_EXISTING)).thenReturn(Mono.just(earthquake(42, FEATURE_ID_EXISTING)));
+        when(earthquakeRepositoryMock.save(newEntity)).thenReturn(Mono.error(new RuntimeException("db down")));
+        when(earthquakeRepositoryMock.save(existingEntity)).thenReturn(Mono.just(existingEntity));
+        when(elasticsearchIndexServiceMock.indexEarthquakes(List.of(existingEntity))).thenReturn(Mono.just(1L));
+
+        earthquakeService.saveUSGSRawData(FROM_DATE, TO_DATE);
+
+        verify(earthquakeService).saveUSGSRawData(FROM_DATE, TO_DATE);
+        verify(restClientMock).get();
+        verify(earthquakeConverterMock).toEntity(newFeature);
+        verify(earthquakeConverterMock).toEntity(existingFeature);
+        verify(earthquakeRepositoryMock).findByFeatureId(FEATURE_ID_NEW);
+        verify(earthquakeRepositoryMock).findByFeatureId(FEATURE_ID_EXISTING);
+        verify(earthquakeRepositoryMock).save(newEntity);
+        verify(earthquakeRepositoryMock).save(existingEntity);
+        verify(elasticsearchIndexServiceMock).indexEarthquakes(List.of(existingEntity));
+    }
+
+    @Test
+    void saveUSGSRawData_whenIndexingFails_stillReturnsSavedMessage() {
+        Feature newFeature = getNewFeature();
+        stubRestClientQuery(featureCollection(OK.value(), List.of(newFeature)));
+
+        Earthquake newEntity = getNewEarthquake();
+        when(earthquakeConverterMock.toEntity(newFeature)).thenReturn(newEntity);
+        when(earthquakeRepositoryMock.findByFeatureId(FEATURE_ID_NEW)).thenReturn(Mono.empty());
+        when(earthquakeRepositoryMock.save(newEntity)).thenReturn(Mono.just(newEntity));
+        when(elasticsearchIndexServiceMock.indexEarthquakes(List.of(newEntity)))
+            .thenReturn(Mono.error(new ElasticsearchIndexException("es down", new RuntimeException())));
+
+        String result = earthquakeService.saveUSGSRawData(FROM_DATE, TO_DATE);
+
+        assertThat(result).startsWith("Saved 1 records");
+        verify(earthquakeService).saveUSGSRawData(FROM_DATE, TO_DATE);
+        verify(restClientMock).get();
+        verify(earthquakeConverterMock).toEntity(newFeature);
+        verify(earthquakeRepositoryMock).findByFeatureId(FEATURE_ID_NEW);
+        verify(earthquakeRepositoryMock).save(newEntity);
+        verify(elasticsearchIndexServiceMock).indexEarthquakes(List.of(newEntity));
     }
 
     @Test

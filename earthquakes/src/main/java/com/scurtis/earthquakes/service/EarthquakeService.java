@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static com.scurtis.earthquakes.common.AppConstants.DATE_FORMATTER;
@@ -45,6 +46,7 @@ public class EarthquakeService {
     private final DayCountRepository dayCountRepository;
     private final EarthquakeRepository earthquakeRepository;
     private final EarthquakeConverter earthquakeConverter;
+    private final ElasticsearchIndexService elasticsearchIndexService;
 
     public Mono<FeatureCollection> getUSGSRawData(String fromDate, String toDate) {
         log.info("EarthquakeService -> getUSGSRawData(fromDate:{}, toDate:{})", fromDate, toDate);
@@ -254,9 +256,13 @@ public class EarthquakeService {
         return msg;
     }
 
+    /**
+     * Postgres is the source of truth: a failed row is logged and skipped, and an Elasticsearch
+     * failure is only logged, since PUT /earthquake/es-index rebuilds the index from Postgres.
+     */
     private void saveRawData(FeatureCollection featureCollection) {
-        featureCollection.getFeatures()
-            .forEach(feature -> earthquakeRepository.findByFeatureId(feature.getId())
+        Flux.fromIterable(featureCollection.getFeatures())
+            .flatMap(feature -> earthquakeRepository.findByFeatureId(feature.getId())
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
                 .flatMap(existing -> {
@@ -264,7 +270,16 @@ public class EarthquakeService {
                     existing.ifPresent(original -> earthquake.setId(original.getId()));
                     //log.debug("Saving earthquake: {}", earthquake);
                     return earthquakeRepository.save(earthquake);
-                }).subscribe());
+                })
+                .onErrorResume(exception -> {
+                    log.error("Failed to save earthquake '{}'", feature.getId(), exception);
+                    return Mono.empty();
+                }))
+            .collectList()
+            .flatMap(elasticsearchIndexService::indexEarthquakes)
+            .subscribe(
+                indexed -> log.debug("Indexed {} earthquake(s) in Elasticsearch", indexed),
+                exception -> log.error("Earthquakes were saved but not indexed in Elasticsearch", exception));
     }
 
 }

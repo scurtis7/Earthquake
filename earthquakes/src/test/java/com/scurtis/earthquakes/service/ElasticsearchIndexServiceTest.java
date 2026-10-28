@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.elasticsearch.core.ReactiveElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.ReactiveIndexOperations;
+import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +25,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,6 +90,82 @@ class ElasticsearchIndexServiceTest {
         assertThatThrownBy(() -> elasticsearchIndexService.recreateESIndex().block())
             .isInstanceOf(ElasticsearchIndexException.class)
             .hasMessageContaining(ES_INDEX_NAME);
+    }
+
+    @Test
+    void indexEarthquakes_whenListIsEmpty_doesNothing() {
+        assertThat(elasticsearchIndexService.indexEarthquakes(List.of()).block()).isZero();
+
+        verifyNoInteractions(reactiveElasticsearchOperations);
+    }
+
+    @Test
+    void indexEarthquakes_whenIndexExists_savesWithoutCreating() {
+        when(reactiveElasticsearchOperations.indexOps(any(IndexCoordinates.class))).thenReturn(indexOperations);
+        when(indexOperations.exists()).thenReturn(Mono.just(true));
+        stubSave();
+
+        Long result = elasticsearchIndexService.indexEarthquakes(List.of(new Earthquake(), new Earthquake())).block();
+
+        assertThat(result).isEqualTo(2L);
+        verify(indexOperations, never()).create(any(), any());
+        verify(reactiveElasticsearchOperations, times(1)).save(any(Flux.class), eq(IndexCoordinates.of(ES_INDEX_NAME)), eq(ES_LOAD_BATCH_SIZE));
+    }
+
+    @Test
+    void indexEarthquakes_whenIndexIsMissing_createsItWithMappingThenSaves() {
+        when(reactiveElasticsearchOperations.indexOps(any(IndexCoordinates.class))).thenReturn(indexOperations);
+        when(indexOperations.exists()).thenReturn(Mono.just(false));
+        when(indexOperations.create(any(), any(Document.class))).thenReturn(Mono.just(true));
+        stubSave();
+
+        Long result = elasticsearchIndexService.indexEarthquakes(List.of(new Earthquake())).block();
+
+        assertThat(result).isEqualTo(1L);
+        verify(indexOperations, times(1)).create(any(), any(Document.class));
+        verify(indexOperations, never()).putMapping(any(Mono.class));
+    }
+
+    @Test
+    void indexEarthquakes_whenCreateFailsBecauseIndexWasCreatedConcurrently_stillSaves() {
+        when(reactiveElasticsearchOperations.indexOps(any(IndexCoordinates.class))).thenReturn(indexOperations);
+        when(indexOperations.exists()).thenReturn(Mono.just(false), Mono.just(true));
+        when(indexOperations.create(any(), any(Document.class))).thenReturn(Mono.error(new RuntimeException("resource_already_exists")));
+        stubSave();
+
+        Long result = elasticsearchIndexService.indexEarthquakes(List.of(new Earthquake())).block();
+
+        assertThat(result).isEqualTo(1L);
+        verify(indexOperations, times(2)).exists();
+    }
+
+    @Test
+    void indexEarthquakes_whenCreateFailsAndIndexStillMissing_throwsElasticsearchIndexException() {
+        when(reactiveElasticsearchOperations.indexOps(any(IndexCoordinates.class))).thenReturn(indexOperations);
+        when(indexOperations.exists()).thenReturn(Mono.just(false));
+        when(indexOperations.create(any(), any(Document.class))).thenReturn(Mono.error(new RuntimeException("boom")));
+
+        assertThatThrownBy(() -> elasticsearchIndexService.indexEarthquakes(List.of(new Earthquake())).block())
+            .isInstanceOf(ElasticsearchIndexException.class)
+            .hasMessageContaining(ES_INDEX_NAME);
+        verify(reactiveElasticsearchOperations, never()).save(any(Flux.class), any(IndexCoordinates.class), any(Integer.class));
+    }
+
+    @Test
+    void indexEarthquakes_whenSaveFails_throwsElasticsearchIndexException() {
+        when(reactiveElasticsearchOperations.indexOps(any(IndexCoordinates.class))).thenReturn(indexOperations);
+        when(indexOperations.exists()).thenReturn(Mono.just(true));
+        when(reactiveElasticsearchOperations.save(any(Flux.class), eq(IndexCoordinates.of(ES_INDEX_NAME)), eq(ES_LOAD_BATCH_SIZE)))
+            .thenReturn(Flux.error(new RuntimeException("boom")));
+
+        assertThatThrownBy(() -> elasticsearchIndexService.indexEarthquakes(List.of(new Earthquake())).block())
+            .isInstanceOf(ElasticsearchIndexException.class)
+            .hasMessageContaining(ES_INDEX_NAME);
+    }
+
+    private void stubSave() {
+        when(reactiveElasticsearchOperations.save(any(Flux.class), eq(IndexCoordinates.of(ES_INDEX_NAME)), eq(ES_LOAD_BATCH_SIZE)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
 }

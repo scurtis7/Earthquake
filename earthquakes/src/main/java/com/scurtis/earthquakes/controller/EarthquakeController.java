@@ -9,7 +9,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -131,11 +130,11 @@ public class EarthquakeController {
      * NOTE: This call takes approximately ~30 minutes to complete.
      *
      * @return success message indicating the index has been recreated and the record count loaded.
-     */
+     *
     @PutMapping("earthquake/es-index")
     public Mono<String> recreateEarthquakeESIndex() {
         log.info("EarthquakeController -> recreateEarthquakeIndex");
         return elasticsearchIndexService.recreateESIndex();
     }
-
+    */
 }

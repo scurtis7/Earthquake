@@ -54,7 +54,10 @@ Right now the only way to update Elasticsearch is `PUT /earthquake/es-index`, wh
 index and reloads all ~4.88M rows (~30 minutes). That's why the index was stuck at 2026-09-30
 while Postgres already had October.
 
-- [ ] Update the index whenever `earthquake` rows are inserted or updated, instead of rebuilding it.
+- [x] Update the index whenever `earthquake` rows are inserted or updated, instead of rebuilding it.
+      Done 2026-10-28: `saveRawData` bulk-indexes each USGS batch via
+      `ElasticsearchIndexService.indexEarthquakes`, which creates the index with the mapping if
+      missing. Elasticsearch failures are logged, not fatal.
       - Natural hook: `EarthquakeService.saveRawData`. After `earthquakeRepository.save(...)`,
         save the returned entity to Elasticsearch too. Documents already use the Postgres `id` as
         `_id`, so saving by id is an upsert: new events get added and changed ones overwritten.
@@ -70,7 +73,12 @@ while Postgres already had October.
       in the index, to backfill after outages or Elasticsearch failures. This needs a reliable
       "changed since" column. `updated_date` is USGS's update time, not ours, so it would need a
       new column such as a `last_modified` timestamp set on save.
-- [ ] Add tests for the new indexing path (the JaCoCo 80% per-class line coverage still applies).
+- [x] Add tests for the new indexing path (the JaCoCo 80% per-class line coverage still applies).
+- [ ] `PUT /earthquake/es-index` is commented out in `EarthquakeController` (and its tests) as of
+      2026-10-28. While it's off, batches that fail to index aren't backfilled and mapping changes
+      can't be applied. Later, either restore it (optionally behind a flag or a running-rebuild
+      guard) or delete it along with the unused controller dependency and the docs that mention it
+      (`CLAUDE.md`, `README.md`, the `saveRawData` javadoc).
 
 ## 5. Let Claude check the UI in Firefox
 

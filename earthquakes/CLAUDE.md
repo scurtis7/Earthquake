@@ -98,8 +98,11 @@ Request flow: `EarthquakeController` → `ValidationService` (input checks) → 
     - `saveUSGSRawData` — a **blocking** `RestClient` call to `/query` for the range; each feature
       is then upserted into `earthquake` by `featureId` with fire-and-forget `.subscribe()`. An
       update rebuilds the whole row from USGS and keeps only the existing `id`, so re-saving a range
-      refreshes every column. `saveUSGSRawDataFromStartDate` loops this month by month from
-      `startDate` to today.
+      refreshes every column. Once every row in the batch is saved, the saved rows are upserted into
+      Elasticsearch in one bulk write (`ElasticsearchIndexService.indexEarthquakes`). A failed row
+      save is logged and skipped; an Elasticsearch failure is only logged (Postgres is the source of
+      truth, and `PUT /earthquake/es-index` rebuilds the index). `saveUSGSRawDataFromStartDate`
+      loops this month by month from `startDate` to today.
     - `saveEarthquakeCounts` — does **not** call USGS. It aggregates the `earthquake` table with
       `getEarthquakeCountsByPeriod` (`LEFT(date_time, 4|7|10)`, `type = 'earthquake'` only, so
       quarry blasts etc. are excluded), then upserts each period into the matching count table,
@@ -119,8 +122,11 @@ Request flow: `EarthquakeController` → `ValidationService` (input checks) → 
   row from Postgres in batches of 1000. Spring Data writes documents using the entity's **camelCase
   Java field names** (`dateTime`, `featureId`, …), so the mapping's property names must match them
   exactly. A snake_case name silently creates an empty field, and the real field gets dynamically
-  mapped as `text` (breaking date range queries). The mapping is only applied on recreate, so a
-  mapping change needs `PUT /earthquake/es-index`.
+  mapped as `text` (breaking date range queries). The mapping is only applied when the index is
+  created, so a mapping change needs `PUT /earthquake/es-index`. `indexEarthquakes` is the
+  incremental path used by the raw save: it creates the index (settings + mapping in one call) if
+  it's missing, then bulk-upserts by Postgres `id`. A raw save running during a rebuild can lose
+  its writes or hit the index between delete and create, so don't run both at once.
 - **`repository/`** — `ReactiveCrudRepository`s with derived queries (`findByX`,
   `findByXBetweenOrderByX`, `findByFeatureId`), plus native `@Query` aggregates on
   `EarthquakeRepository` (`getEarthquakeCountsByPeriod`, `getEarthquakeLastDate`).

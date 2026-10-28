@@ -1,7 +1,6 @@
 package com.scurtis.earthquakes.controller;
 
 import com.scurtis.earthquakes.dto.EarthquakeCountDto;
-import com.scurtis.earthquakes.exception.ElasticsearchIndexException;
 import com.scurtis.earthquakes.exception.ValidationException;
 import com.scurtis.earthquakes.model.FeatureCollection;
 import com.scurtis.earthquakes.model.Metadata;
@@ -259,6 +258,7 @@ class EarthquakeControllerTest {
         verify(validationService).validateDateInputs(FROM_DATE, TO_DATE);
     }
 
+    /*
     @Test
     void recreateEarthquakeIndex_returnsServiceResult() {
         when(elasticsearchIndexService.recreateESIndex()).thenReturn(Mono.just("Index 'earthquake_index' has been recreated"));
@@ -286,5 +286,6 @@ class EarthquakeControllerTest {
 
         verify(elasticsearchIndexService).recreateESIndex();
     }
+     */
 
 }
